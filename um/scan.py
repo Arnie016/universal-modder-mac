@@ -173,11 +173,26 @@ def mac_games() -> list[dict]:
             continue
         for app in apps:
             info = bundle_info(app)
+            ios = None
+            if not info:                       # iPhone/iPad app on Apple Silicon: Foo.app/Wrapper/Foo.app/Info.plist
+                ios = next((w for w in (app / "Wrapper").glob("*.app")), None) if (app / "Wrapper").is_dir() else None
+                if ios:
+                    import plistlib
+                    try:
+                        info = plistlib.loads((ios / "Info.plist").read_bytes())
+                    except Exception:
+                        info = {}
+                    try:   # App Store genre lives next to the wrapped app
+                        meta = plistlib.loads((app / "Wrapper" / "iTunesMetadata.plist").read_bytes())
+                    except Exception:
+                        meta = {}
+                    if "game" in (str(meta.get("genre", "")) + str(meta.get("genres", ""))).lower():
+                        info["LSApplicationCategoryType"] = "public.app-category.games"
             bid = info.get("CFBundleIdentifier")
-            if bid == "com.valvesoftware.steam" or str(app) in seen or not _is_mac_game(app, info):
+            if bid == "com.valvesoftware.steam" or str(app) in seen or not (_is_mac_game(app, info) or (ios and _is_mac_game(ios, info))):
                 continue
             seen.add(str(app))
-            store = "appstore" if (app / "Contents" / "_MASReceipt").exists() else "app"
+            store = "ios-app" if ios else "appstore" if (app / "Contents" / "_MASReceipt").exists() else "app"
             out.append(dict(store=store, appid=bid, name=info.get("CFBundleDisplayName") or info.get("CFBundleName") or app.stem,
                             path=str(app)))
     return out
