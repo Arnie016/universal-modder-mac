@@ -1,0 +1,7 @@
+{
+	"schemaVersion": 1, "id": "slingcraft", "version": "${version}", "name": "Slingcraft",
+	"description": "A first-person slingshot physics game in Minecraft: launch chickens at pig towers with commands.",
+	"authors": ["Arnav Salkade", "Claude Code"], "license": "MIT", "environment": "*",
+	"entrypoints": { "main": ["dev.arnav.slingcraft.Slingcraft"] },
+	"depends": { "fabricloader": ">=0.19.0", "minecraft": "~26.3", "java": ">=25", "fabric-api": "*" }
+}
