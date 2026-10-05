@@ -1,8 +1,9 @@
 [project]
 name = "universal-modder"
-version = "0.2.0"
-description = "Tools and a shared knowledge base for AI agents that mod games: engine scanner, fal asset generation, sprite and 3D-to-sprite pipelines, window capture and input on Windows, showcase video editing, field notes."
+version = "0.3.0"
+description = "Tools and a shared knowledge base for AI agents that mod games: engine scanner, fal asset generation, sprite and 3D-to-sprite pipelines, window capture, input and recording on Windows and macOS, code-signing-aware Mac bundle scanning, showcase video editing, field notes."
 readme = "README.md"
+keywords = ["game-modding", "macos", "apple-silicon", "ai-agents", "screencapturekit", "reverse-engineering", "fal"]
 license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
@@ -10,6 +11,10 @@ dependencies = [
     "numpy>=1.24",
     "pyyaml>=6",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Arnie016/universal-modder-mac"
+Upstream = "https://github.com/rehan-remade/universal-modder"
 
 [project.scripts]
 um = "um.cli:main"

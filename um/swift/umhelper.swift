@@ -56,7 +56,10 @@ func screenScale(for r: CGRect) -> CGFloat {
 }
 
 func listWindows(pid: Int32? = nil, all: Bool = false) -> [Win] {
-    guard let info = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]]
+    // For one process, include windows on other Spaces / behind full-screen apps (the user switched away);
+    // the global list stays on-screen only so `ps` shows what is actually visible.
+    let opts: CGWindowListOption = pid != nil ? [.optionAll, .excludeDesktopElements] : [.optionOnScreenOnly, .excludeDesktopElements]
+    guard let info = CGWindowListCopyWindowInfo(opts, kCGNullWindowID) as? [[String: Any]]
     else { return [] }
     var res: [Win] = []
     for w in info {
@@ -67,6 +70,7 @@ func listWindows(pid: Int32? = nil, all: Bool = false) -> [Win] {
         var rect = CGRect.zero
         if let b = w[kCGWindowBounds as String] as? NSDictionary, let r = CGRect(dictionaryRepresentation: b) { rect = r }
         if rect.width < 32 || rect.height < 32 { continue }
+        if pid != nil && (w[kCGWindowAlpha as String] as? Double ?? 1) == 0 { continue }
         res.append(Win(id: (w[kCGWindowNumber as String] as? NSNumber)?.uint32Value ?? 0, pid: wpid,
                        owner: w[kCGWindowOwnerName as String] as? String ?? "",
                        title: w[kCGWindowName as String] as? String ?? "", bounds: rect, layer: layer))
@@ -271,21 +275,21 @@ final class Recorder: NSObject, SCStreamDelegate, @unchecked Sendable, SCRecordi
     var started = Date()
     var error: Error?
 
+    // ScreenCaptureKit puts a recording indicator in the menu bar (an NSWindow), so capture must start on the
+    // main thread of a running NSApplication - from a plain dispatchMain() worker it throws NSInternalInconsistency.
+    @MainActor
     func start(windowID: UInt32, url: URL, fps: Int, audio: Bool, cursor: Bool) async throws -> [String: Any] {
-        let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+        let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
         guard let win = content.windows.first(where: { $0.windowID == windowID }) else { fail("window \(windowID) not shareable (on screen? Screen Recording allowed?)") }
         guard let app = win.owningApplication else { fail("window has no owning app") }
-        // A display filter that includes only the game's app: only its windows are drawn and only its audio is
-        // captured (the macOS equivalent of gfxcapture + process loopback). sourceRect crops to the window.
-        let display = content.displays.first(where: { $0.frame.intersects(win.frame) }) ?? content.displays[0]
-        let filter = SCContentFilter(display: display, including: [app], exceptingWindows: [])
+        // A desktop-independent window filter follows the game's window even on another Space or behind other
+        // windows; for that filter ScreenCaptureKit captures audio from the window's own app only. (A display filter
+        // + sourceRect fails with "failure to process first sample buffer" once the window is off the display.)
+        let filter = SCContentFilter(desktopIndependentWindow: win)
         let scale = CGFloat(filter.pointPixelScale)
-        let local = CGRect(x: win.frame.minX - display.frame.minX, y: win.frame.minY - display.frame.minY,
-                           width: win.frame.width, height: win.frame.height)
         let cfg = SCStreamConfiguration()
-        cfg.sourceRect = local
-        cfg.width = Int(local.width * scale) & ~1
-        cfg.height = Int(local.height * scale) & ~1
+        cfg.width = Int(win.frame.width * scale) & ~1
+        cfg.height = Int(win.frame.height * scale) & ~1
         cfg.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(fps))
         cfg.showsCursor = cursor
         cfg.capturesAudio = audio
@@ -333,7 +337,7 @@ func record() {
         s.resume()
         sources.append(s)
     }
-    Task {
+    Task { @MainActor in
         do {
             let meta = try await rec.start(windowID: wid, url: url, fps: Int(arg("--fps") ?? "30") ?? 30,
                                            audio: !flag("--no-audio"), cursor: flag("--cursor"))
@@ -353,7 +357,9 @@ func record() {
             }
         }
     }
-    dispatchMain()
+    let app = NSApplication.shared
+    app.setActivationPolicy(.accessory)   // no Dock icon, never steals focus from the game
+    app.run()
 }
 
 // ---------------------------------------------------------------------------------------------- main

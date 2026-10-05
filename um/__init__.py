@@ -12,4 +12,4 @@ Subcommands (see `um --help`):
   kb        the knowledge base: search prior field notes, write your own, check it, open a PR
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"

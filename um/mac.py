@@ -110,6 +110,11 @@ def pid_of(app: str | None = None, pid: int | None = None) -> int:
         die("give --app NAME (regex on the app/owner name) or --pid")
     rows = processes(app)
     if not rows:
+        # not visible (another Space, behind a full-screen app): find the process and check it has a window anywhere
+        r = subprocess.run(["pgrep", "-if", app], capture_output=True, text=True)
+        cands = [int(p) for p in r.stdout.split() if int(p) != os.getpid() and windows(int(p))]
+        if len(cands) == 1:
+            return cands[0]
         # not on screen yet? fall back to the process table
         r = subprocess.run(["pgrep", "-x", app], capture_output=True, text=True)
         pids = [int(p) for p in r.stdout.split()]

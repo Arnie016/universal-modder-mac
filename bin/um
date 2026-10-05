@@ -12,7 +12,9 @@ while [ -L "$SRC" ]; do
 done
 ROOT="$(cd -P "$(dirname "$SRC")/.." && pwd)"
 if command -v uv >/dev/null 2>&1 && [ -z "${UM_NO_UV:-}" ]; then
-  exec uv run --quiet --project "$ROOT" python -m um "$@"
+  # PYTHONPATH too: on macOS, folders synced by iCloud (Desktop, Documents) can mark the venv's .pth files hidden,
+  # and Python 3.12+ skips hidden .pth files, so the editable install silently vanishes ("No module named 'um'").
+  PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}" exec uv run --quiet --project "$ROOT" python -m um "$@"
 fi
 PY="$(command -v python3 || command -v python)"
 PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}" exec "$PY" -m um "$@"
