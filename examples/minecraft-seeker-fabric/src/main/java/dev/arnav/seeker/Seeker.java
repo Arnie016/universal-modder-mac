@@ -6,6 +6,8 @@ import java.util.WeakHashMap;
 import java.util.Set;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.commands.Commands;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.Registry;
@@ -50,6 +52,20 @@ public final class Seeker implements ModInitializer {
 				LOG.info("Seeker: kill #{} {}", kills, entity.getType().toShortString());
 			}
 		});
+		// `/seeker demo`: wand in hand + a ring of husks off to the sides, so there is something to home onto
+		CommandRegistrationCallback.EVENT.register((dispatcher, ctx, selection) -> dispatcher.register(Commands.literal("seeker")
+				.then(Commands.literal("demo").executes(c -> {
+					var src = c.getSource();
+					var cmds = src.getServer().getCommands();
+					cmds.performPrefixedCommand(src, "item replace entity @s weapon.mainhand with seeker:seeker_wand");
+					for (String at : new String[] {"^5 ^ ^8", "^-6 ^ ^7", "^8 ^ ^4", "^-9 ^ ^3", "^2 ^ ^12"}) {
+						cmds.performPrefixedCommand(src.withSuppressedOutput(),
+								"execute at @s run summon husk " + at + " {PersistenceRequired:1b,Glowing:1b}");
+					}
+					src.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+							"Seeker: 5 husks around you. Right-click (two-finger click on a trackpad) and fire anywhere - the arrows find them."));
+					return 1;
+				}))));
 		LOG.info("Seeker: wand registered as {}", WAND_KEY.identifier());
 	}
 

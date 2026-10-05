@@ -9,7 +9,7 @@ renderer. The item texture came from fal.
 ## Play it
 ```bash
 ./gradlew runClient                 # dev client with an offline username - no Microsoft account needed
-# in game: /give @p seeker:seeker_wand
+# in game: /seeker demo   (wand + 5 husks around you), then RIGHT-click (two-finger click on a trackpad) to fire
 ```
 Or drop `build/libs/seeker-0.1.0.jar` (after `./gradlew build`), plus Fabric API, into a Fabric 26.3 instance's `mods/`.
 
