@@ -54,6 +54,7 @@ Windows games are driven natively or from WSL. macOS games are driven with `um m
 ## macOS
 This fork makes the whole loop work on a Mac (Apple Silicon or Intel), not just the asset tools.
 ```bash
+# Claude Code plugin from this fork:  /plugin marketplace add Arnie016/universal-modder
 uv tool install git+https://github.com/Arnie016/universal-modder@macos
 um mac doctor        # permissions + tools; grant Screen Recording and Accessibility to the app that runs your agent
 um scan --list       # .app games, Steam for Mac, App Store titles (flagged), Wine-wrapped Windows games
@@ -69,6 +70,11 @@ um scan --list       # .app games, Steam for Mac, App Store titles (flagged), Wi
   - `sign-info`, and `inject` (`DYLD_INSERT_LIBRARIES`, refused when signing blocks it).
 
   The native half is one Swift file, compiled on first use. No pyobjc, no build step.
+- **Status, honestly:**
+  - **Verified on macOS 26.6 / Apple Silicon:** `scan`, `ps`, `launch`, `kill`, `sign-info`, `doctor`, `drive rect`, and
+    `shot`'s permission error.
+  - **Written but not yet run on a machine with Screen Recording and Accessibility granted:** `drive` input,
+    `record`, and a successful `shot`. Reports welcome.
 - **Worked example:** [examples/macos-uzdoom-freedoom](examples/macos-uzdoom-freedoom), a homing rocket launcher for
   Freedoom on UZDoom with a fal-generated pickup sprite. It was verified in game on a locked Mac through the engine's
   own screenshots.
