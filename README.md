@@ -54,7 +54,7 @@ Windows games are driven natively or from WSL. macOS games are driven with `um m
 ## macOS
 This fork makes the whole loop work on a Mac (Apple Silicon or Intel), not just the asset tools.
 ```bash
-# Claude Code plugin from this fork:  /plugin marketplace add Arnie016/universal-modder
+# plugin installs read the default branch; until macos is merged there, use the CLI line below in a clone of the macos branch
 uv tool install git+https://github.com/Arnie016/universal-modder@macos
 um mac doctor        # permissions + tools; grant Screen Recording and Accessibility to the app that runs your agent
 um scan --list       # .app games, Steam for Mac, App Store titles (flagged), Wine-wrapped Windows games
