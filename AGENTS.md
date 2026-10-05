@@ -21,6 +21,7 @@ repo, they almost always want to **mod a game**, or to learn how a game was modd
     - `fal`: sprites, textures, PBR, 3D, rigs, SFX, music, voice, video via fal's REST API
     - `sprite` / `render3d`: art → engine-ready frames
     - `win`: launch, screenshot, input, record on Windows (also from WSL)
+    - `mac`: the same on macOS, plus code-signing checks and dylib injection (`um mac doctor` first)
     - `video`: contact sheets and EDL showcase edits
     - `backup`: snapshot and restore saves
     - `publish`: pre-release lint
@@ -44,7 +45,7 @@ repo, they almost always want to **mod a game**, or to learn how a game was modd
 - **Saves:** `um backup` saves before modded launches.
 - **What you ship:** never commit or publish game files, extracted assets or decompiled code. Keep
   decompiles outside the repo.
-- **Processes:** kill by exact PID (`um win kill`), never by name pattern.
+- **Processes:** kill by exact PID (`um win kill` / `um mac kill`), never by name pattern.
 - **Ask first** before:
   - driving the user's mouse and keyboard, and never focus a game with an online mode while they're typing;
   - installing loaders into game folders or changing the registry;

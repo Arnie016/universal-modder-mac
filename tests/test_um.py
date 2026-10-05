@@ -328,3 +328,72 @@ def test_backup_diff_and_restore_round_trip(tmp_path, monkeypatch):
     assert (src / "sub" / "cfg.ini").read_text() == "a=1"
     assert not (src / "extra.log").exists()
     assert backup.snapshots("t-pre-restore")  # the state before the restore was kept
+
+
+# --------------------------------------------------------------------------- macOS port
+
+def _fake_app(root, name, files, plist=None):
+    import plistlib
+    app = root / f"{name}.app"
+    (app / "Contents" / "MacOS").mkdir(parents=True)
+    with open(app / "Contents" / "Info.plist", "wb") as f:
+        plistlib.dump(plist or {"CFBundleExecutable": name, "CFBundleIdentifier": f"com.test.{name.lower()}",
+                                "LSApplicationCategoryType": "public.app-category.games"}, f)
+    for rel, data in files.items():
+        p = app / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_bytes(data)
+    return app
+
+
+def test_macho_info_thin_and_fat(tmp_path):
+    import struct
+    from um.scan import macho_info
+    thin = tmp_path / "thin"
+    thin.write_bytes(b"\xcf\xfa\xed\xfe" + struct.pack("<I", 0x0100000C) + b"\0" * 64)
+    assert macho_info(thin)["arch"] == "arm64" and not macho_info(thin)["rosetta"]
+    fat = tmp_path / "fat"
+    fat.write_bytes(b"\xca\xfe\xba\xbe" + struct.pack(">I", 2) + struct.pack(">I", 0x01000007) + b"\0" * 16
+                    + struct.pack(">I", 0x0100000C) + b"\0" * 16)
+    assert macho_info(fat)["arch"] == "x86_64+arm64"
+    intel = tmp_path / "intel"
+    intel.write_bytes(b"\xcf\xfa\xed\xfe" + struct.pack("<I", 0x01000007) + b"\0" * 64)
+    assert macho_info(intel)["rosetta"]
+
+
+def test_detect_mac_unity_bundle(tmp_path):
+    from um.scan import Index, detect
+    app = _fake_app(tmp_path, "Game", {
+        "Contents/Frameworks/UnityPlayer.dylib": b"x",
+        "Contents/Resources/Data/globalgamemanagers": b"x",
+        "Contents/Resources/Data/Managed/Assembly-CSharp.dll": b"MZ",
+    })
+    hits, _ = detect(Index(app))
+    assert hits[0][0] == "unity-mono"
+
+
+def test_detect_mac_gamemaker_and_electron(tmp_path):
+    from um.scan import Index, detect
+    gm = _fake_app(tmp_path, "GM", {"Contents/Resources/game.ios": b"FORM\0\0\0\0GEN8" + b"\0" * 64})
+    assert detect(Index(gm))[0][0][0] == "gamemaker"
+    el = _fake_app(tmp_path, "El", {"Contents/Resources/app.asar": b"x"})
+    assert detect(Index(el))[0][0][0] == "electron"
+
+
+def test_detect_wine_wrapper(tmp_path):
+    from um.scan import Index, detect
+    app = _fake_app(tmp_path, "Port", {"Contents/SharedSupport/prefix/drive_c/Game/game.exe": b"MZ"})
+    keys = [h[0] for h in detect(Index(app))[0]]
+    assert "wine" in keys
+
+
+def test_mac_keycodes_in_swift_source():
+    # the Swift helper maps Windows VK hex so WinDrive scripts port over; keep the table and parser together
+    src = (Path(__file__).resolve().parents[1] / "um" / "swift" / "umhelper.swift").read_text()
+    for needle in ('"escape": 53', '0x1B: "escape"', "func keyCode", "SCRecordingOutput", "CGPreflightScreenCaptureAccess"):
+        assert needle in src
+
+
+def test_cli_registers_mac_group():
+    from um.cli import GROUPS
+    assert "mac" in GROUPS and "win" in GROUPS

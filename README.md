@@ -49,7 +49,30 @@ uv tool install git+https://github.com/rehan-remade/universal-modder     # or: p
 export FAL_KEY=...
 ```
 You also need Python 3.10+ and ffmpeg. `uv` is recommended. Blender is needed for 3D → sprite renders.
-Windows games are driven natively or from WSL.
+Windows games are driven natively or from WSL. macOS games are driven with `um mac` (see below).
+
+## macOS
+This fork makes the whole loop work on a Mac (Apple Silicon or Intel), not just the asset tools.
+```bash
+uv tool install git+https://github.com/Arnie016/universal-modder@macos
+um mac doctor        # permissions + tools; grant Screen Recording and Accessibility to the app that runs your agent
+um scan --list       # .app games, Steam for Mac, App Store titles (flagged), Wine-wrapped Windows games
+```
+- **`um scan`** understands `.app` bundles. It reads Unity/Unreal/Godot/GameMaker/Electron/Ren'Py/LÖVE layouts, Mach-O
+  architectures (Rosetta), and code signing (hardened runtime, library validation, sandbox, App Store), then picks
+  Mac-specific routes.
+- **`um mac`** is the `um win` toolkit rebuilt on Apple APIs:
+  - `shot` uses `screencapture`, with blank-frame detection;
+  - `record` uses ScreenCaptureKit and captures the window plus only the game's audio;
+  - `drive` uses CGEvent with WinDrive-compatible commands and relative mouselook;
+  - `ps`, `launch`, `kill` (by PID);
+  - `sign-info`, and `inject` (`DYLD_INSERT_LIBRARIES`, refused when signing blocks it).
+
+  The native half is one Swift file, compiled on first use. No pyobjc, no build step.
+- **Worked example:** [examples/macos-uzdoom-freedoom](examples/macos-uzdoom-freedoom), a homing rocket launcher for
+  Freedoom on UZDoom with a fal-generated pickup sprite. It was verified in game on a locked Mac through the engine's
+  own screenshots.
+- **Playbook:** [`skills/mod-any-game/references/engines/macos.md`](skills/mod-any-game/references/engines/macos.md).
 
 ## Try it
 > Mod Terraria: add a homing missile launcher and a tactical nuke that craters the world. Make the sprites with fal.
@@ -120,6 +143,7 @@ players, and an honest status and verification.
 | `um sprite` | `cutout`, `fit`, `pixelate`, `palette`, `sheet`, `slice`, `frames`, `team-mask`, `seamless`, `preview` |
 | `um render3d` | GLB → sprite frames from the game's camera (`aoe2`, `iso8`, `trueiso`, `topdown`, `side`, `turntable`) with Blender |
 | `um win` | `shot`, `record` (gfxcapture + process-loopback audio), `drive` (input that only reaches the game), `ps`, `kill`, `launch`, `reg` |
+| `um mac` | `doctor`, `ps`, `launch`, `shot`, `record` (ScreenCaptureKit, game-only audio), `drive` (CGEvent), `kill`, `sign-info`, `inject` |
 | `um video` | `contact` sheets, `compile` (EDL → titled, beat-cut video with music), `mux`, `beats`, `first-frame` |
 | `um backup` | Snapshot, diff and restore save folders |
 | `um publish check` | Blocks shipping game files, decompiled code and leaked keys |

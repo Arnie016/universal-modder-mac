@@ -93,6 +93,8 @@ the game window's **client area**.
   ffmpeg `x11grab`.
 - **Linux (Wayland):** ydotool + `grim`. Proton games are Windows games under Wine: launch options
   (`WINEDLLOVERRIDES`, `PROTON_LOG=1`) go in Steam.
-- **macOS:** `screencapture -l <windowid> shot.png` (window id via `GetWindowID` or AppleScript),
-  `osascript` / `cliclick` for input. Input and screen recording need Accessibility and Screen Recording
-  permission for the terminal.
+- **macOS:** use `um mac` (doctor, ps, launch, shot, drive, record, kill), the same toolkit as `um win`, built on
+  CGWindowList, `screencapture -l`, CGEvent and ScreenCaptureKit (one window plus only the game's audio). The app
+  running the agent needs Screen Recording and Accessibility permission, which only the user can grant. When the
+  screen is locked, prefer the game's own screenshot command and a Vulkan/Metal backend. Full notes:
+  `skills/mod-any-game/references/engines/macos.md`.

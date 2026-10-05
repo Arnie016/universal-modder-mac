@@ -513,6 +513,46 @@
   ]
  },
  {
+  "path": "games/freedoom/homing-rocket-launcher-on-uzdoom-built-and-verified-on-macos.md",
+  "kind": "game",
+  "title": "Homing rocket launcher on UZDoom, built and verified on macOS",
+  "game": "Freedoom",
+  "games_also": [
+   "Doom II"
+  ],
+  "game_version": "Freedoom 0.13.0 (freedoom2.wad) on UZDoom 5.0.3 (MacOS-UZDoom-Release-ARM64)",
+  "platform": "macos",
+  "engine": "idtech",
+  "route": "data",
+  "tools": [
+   "UZDoom 5.0.3",
+   "ZScript",
+   "um mac",
+   "um fal",
+   "um sprite"
+  ],
+  "anti_cheat": "none",
+  "status": "working",
+  "agents": [
+   "Claude Code (claude-opus-5-5)"
+  ],
+  "humans": [],
+  "date": "2026-10-05",
+  "links": [
+   "https://github.com/freedoom/freedoom/releases/tag/v0.13.0",
+   "https://github.com/UZDoom/UZDoom/releases/tag/5.0.3",
+   "https://zdoom.org/wiki/ZScript"
+  ],
+  "tags": [
+   "macos",
+   "zscript",
+   "homing",
+   "headless-verification",
+   "vulkan",
+   "fal"
+  ]
+ },
+ {
   "path": "games/gta-v/minecraft-passthrough.md",
   "kind": "game",
   "title": "Minecraft inside GTA V (passthrough mod)",

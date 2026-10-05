@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -45,7 +46,9 @@ MOTIONS = {
 def blender_bin() -> str:
     b = os.environ.get("BLENDER") or shutil.which("blender")
     if not b:
-        for c in ("/Applications/Blender.app/Contents/MacOS/Blender", r"C:\Program Files\Blender Foundation\Blender\blender.exe"):
+        # macOS: Blender.app, or versioned copies like "Blender 5.2.app" (newest first)
+        macs = sorted(Path("/Applications").glob("Blender*.app"), key=lambda p: [int(n) for n in re.findall(r"\d+", p.name)] or [0], reverse=True)
+        for c in [str(m / "Contents/MacOS/Blender") for m in macs] + [r"C:\Program Files\Blender Foundation\Blender\blender.exe"]:
             if Path(c).exists():
                 return c
         die("Blender not found: install it (blender.org, or `snap install blender --classic`) or set BLENDER=/path/to/blender")

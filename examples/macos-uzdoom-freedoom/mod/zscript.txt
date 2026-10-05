@@ -1,0 +1,123 @@
+version "4.10"
+
+// Mac Arsenal: a homing rocket launcher for any Doom IWAD (built and tested on Freedoom + UZDoom 5 on macOS).
+// Uses the IWAD's own rocket sprites (MISG/MISL/PUFF) recoloured, so the mod ships no game art; the pickup
+// sprite (sprites/SEEKA0.png) was generated with fal and fitted with `um sprite fit`.
+
+class SeekerLauncher : RocketLauncher
+{
+	Default
+	{
+		Weapon.SlotNumber 5;
+		Weapon.SlotPriority 2;
+		Weapon.AmmoType "RocketAmmo";
+		Weapon.AmmoUse 1;
+		Weapon.AmmoGive 20;
+		Inventory.PickupMessage "$MA_GOTSEEKER";
+		Tag "$MA_SEEKER";
+	}
+	States
+	{
+	Spawn:
+		SEEK A -1;
+		Stop;
+	Fire:
+		MISG B 6 A_GunFlash;
+		MISG B 10 A_FireProjectile("SeekerRocket");
+		MISG B 0 A_ReFire;
+		Goto Ready;
+	}
+}
+
+class SeekerRocket : Rocket
+{
+	Default
+	{
+		Speed 16;
+		+SEEKERMISSILE
+		+SCREENSEEKER
+		Translation "Ice";
+		Obituary "$MA_OB_SEEKER";
+	}
+	States
+	{
+	Spawn:
+		MISL A 2 Bright
+		{
+			// look for a target even if the player did not aim at one, then steer up to 6 degrees per step
+			A_SeekerMissile(2, 6, SMF_LOOK | SMF_PRECISE, 256, 12);
+			A_SpawnItemEx("SeekerTrail", -8, 0, 0, 0, 0, 0, 0, SXF_NOCHECKPOSITION);
+		}
+		Loop;
+	}
+}
+
+class SeekerTrail : Actor
+{
+	Default
+	{
+		+NOINTERACTION
+		+NOGRAVITY
+		RenderStyle "Add";
+		Alpha 0.7;
+		Scale 0.6;
+		Translation "Ice";
+	}
+	States
+	{
+	Spawn:
+		PUFF ABCD 3 Bright;
+		Stop;
+	}
+}
+
+class MacArsenalHandler : EventHandler
+{
+	int seekerKills;
+
+	override void PlayerSpawned(PlayerEvent e)
+	{
+		let pmo = players[e.PlayerNumber].mo;
+		if (pmo == null) return;
+		pmo.GiveInventory("SeekerLauncher", 1);
+		pmo.GiveInventory("RocketAmmo", 40);
+		Console.Printf("MacArsenal: Seeker Launcher ready");
+	}
+
+	override void WorldThingDied(WorldEvent e)
+	{
+		if (e.Inflictor is "SeekerRocket")
+		{
+			seekerKills++;
+			Console.Printf("MacArsenal: seeker kill #%d %s", seekerKills, e.Thing.GetClassName());
+		}
+	}
+
+	// `netevent ma_test`: put imps off to the sides (not where the player aims) so only homing can hit them
+	override void NetworkProcess(ConsoleEvent e)
+	{
+		if (e.Name != "ma_test") return;
+		let pmo = players[e.Player].mo;
+		if (pmo == null) return;
+		int placed = 0;
+		static const double offs[] = { 35, -35, 55, -55, 20, -20 };
+		for (int i = 0; i < offs.Size() && placed < 3; i++)
+		{
+			for (double d = 320; d >= 160 && placed < 3; d -= 32)
+			{
+				double a = pmo.Angle + offs[i];
+				vector3 pos = pmo.Vec3Angle(d, a, 0);
+				let imp = Actor.Spawn("DoomImp", pos);
+				if (imp == null) continue;
+				if (!imp.TestMobjLocation() || !pmo.CheckSight(imp)) { imp.Destroy(); continue; }
+				imp.Angle = imp.AngleTo(pmo);
+				placed++;
+				Console.Printf("MacArsenal: test imp at %.0f deg, %.0f units", offs[i], d);
+				break;
+			}
+		}
+		Actor.Spawn("SeekerLauncher", pmo.Vec3Angle(80, pmo.Angle, 0));    // show the fal pickup sprite in frame
+		pmo.A_SelectWeapon("SeekerLauncher");
+		Console.Printf("MacArsenal: test placed %d imps", placed);
+	}
+}

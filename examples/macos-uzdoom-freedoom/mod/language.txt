@@ -1,0 +1,4 @@
+[enu default]
+MA_SEEKER = "Seeker Launcher";
+MA_GOTSEEKER = "You got the Seeker Launcher! (Mac Arsenal)";
+MA_OB_SEEKER = "%o could not outrun %k's seeker rocket.";

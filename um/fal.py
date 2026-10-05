@@ -44,7 +44,7 @@ OPENAPI = "https://fal.ai/api/openapi/queue/openapi.json"
 # Defaults per recipe (checked against the fal catalog 2026-09; override any with --model).
 MODELS = {
     "image": "fal-ai/nano-banana-2",
-    "sprite": "openai/gpt-image-2",              # supports background=transparent
+    "sprite": "openai/gpt-image-2",              # rendered on white, then cut out with rmbg
     "edit": "fal-ai/nano-banana-2/edit",
     "rmbg": "fal-ai/birefnet/v2",
     "pixelate": "fal-ai/image2pixel",
@@ -360,12 +360,15 @@ def cmd(args):
     elif r == "sprite":
         prompt = f"{args.prompt}. {SPRITE_STYLE}"
         ep = model or MODELS["sprite"]
+        # fal's gpt-image-2 endpoint rejects background="transparent" (HTTP 422, seen 2026-10), so every model renders
+        # on flat white and the cutout comes from the rmbg model; pass --set background=transparent where it works.
         if ep.startswith("openai/gpt-image"):
-            inp = dict(prompt=prompt, background="transparent", quality=args.quality, image_size=args.size, num_images=args.n, output_format="png")
+            inp = dict(prompt=prompt + ", on a plain flat white background", quality=args.quality, image_size=args.size,
+                       num_images=args.n, output_format="png")
         else:
             inp = dict(prompt=prompt + ", on a plain flat white background", num_images=args.n)
         res = generate(ep, {**inp, **extra}, out, _name(args, args.prompt))
-        if not ep.startswith("openai/gpt-image"):
+        if extra.get("background") != "transparent":
             for f in res["files"]:
                 generate(MODELS["rmbg"], dict(image_url=f, output_format="png"), out, Path(f).stem + "_cut")
     elif r == "edit":
@@ -432,7 +435,7 @@ def register(sub):
     q.add_argument("--res", default="1K", choices=["0.5K", "1K", "2K", "4K"])
     q.add_argument("--n", type=int, default=1)
     q.add_argument("--seed", type=int)
-    q = recipe("sprite", "text -> sprite on a transparent background (GPT Image 2)", "prompt")
+    q = recipe("sprite", "text -> sprite on a transparent background (GPT Image 2 + BiRefNet cutout)", "prompt")
     q.add_argument("--quality", default="high", choices=["low", "medium", "high"])
     q.add_argument("--size", default="square_hd", help="square_hd, portrait_4_3, landscape_4_3, ...")
     q.add_argument("--n", type=int, default=1)

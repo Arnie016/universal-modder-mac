@@ -1,6 +1,6 @@
 """Find installed games and fingerprint one: engine, scripting runtime, anti-cheat, mod loaders, saves.
 
-    um scan --list                 # Steam / Epic / Xbox installs on this machine (Windows, WSL, Linux, macOS)
+    um scan --list                 # Steam / Epic / Xbox installs, plus .app games on macOS
     um scan terraria               # fuzzy name or a path; prints the report
     um scan "C:\\Games\\Foo" --json  # machine-readable, for agents
 
@@ -140,8 +140,51 @@ def xbox_games() -> list[dict]:
     return out
 
 
+MAC_APP_DIRS = [Path("/Applications"), Path("/Applications/Games"), Path.home() / "Applications", Path.home() / "Games"]
+# files that mark a .app as a game engine build, checked without walking the bundle
+MAC_ENGINE_MARKERS = ["Contents/Frameworks/UnityPlayer.dylib", "Contents/Resources/Data/globalgamemanagers",
+                      "Contents/Resources/Data/Managed", "Contents/UE", "Contents/Resources/game.ios",
+                      "Contents/Resources/autorun/renpy", "Contents/Resources/drive_c", "Contents/SharedSupport/prefix/drive_c"]
+MAC_GAME_BUNDLES = {"com.mojang.minecraftlauncher", "com.valvesoftware.steam"}
+
+
+def _is_mac_game(app: Path, info: dict) -> bool:
+    if "games" in str(info.get("LSApplicationCategoryType", "")).lower() or info.get("CFBundleIdentifier") in MAC_GAME_BUNDLES:
+        return True
+    if any((app / m).exists() for m in MAC_ENGINE_MARKERS):
+        return True
+    res = app / "Contents" / "Resources"
+    try:
+        return any(f.suffix.lower() in (".pck", ".love", ".wad", ".pk3") for f in res.iterdir())
+    except OSError:
+        return False
+
+
+def mac_games() -> list[dict]:
+    """.app bundles that look like games (category = games, or an engine signature) in the usual folders."""
+    if not is_mac():
+        return []
+    from um.mac import bundle_info
+    out, seen = [], set()
+    for d in MAC_APP_DIRS:
+        try:
+            apps = [a for a in d.iterdir() if a.suffix == ".app"]
+        except OSError:
+            continue
+        for app in apps:
+            info = bundle_info(app)
+            bid = info.get("CFBundleIdentifier")
+            if bid == "com.valvesoftware.steam" or str(app) in seen or not _is_mac_game(app, info):
+                continue
+            seen.add(str(app))
+            store = "appstore" if (app / "Contents" / "_MASReceipt").exists() else "app"
+            out.append(dict(store=store, appid=bid, name=info.get("CFBundleDisplayName") or info.get("CFBundleName") or app.stem,
+                            path=str(app)))
+    return out
+
+
 def all_games() -> list[dict]:
-    return steam_games() + epic_games() + xbox_games()
+    return steam_games() + epic_games() + xbox_games() + mac_games()
 
 
 def resolve_game(query: str) -> dict:
@@ -229,6 +272,32 @@ def pe_info(path: Path) -> dict | None:
     dd = opt + (96 if magic == 0x10B else 112)
     clr_rva = struct.unpack_from("<I", head, dd + 14 * 8)[0] if dd + 15 * 8 <= len(head) else 0
     return dict(arch={0x14C: "x86", 0x8664: "x64", 0xAA64: "arm64"}.get(machine, hex(machine)), managed=clr_rva != 0)
+
+
+MACHO_CPU = {7: "x86", 0x01000007: "x86_64", 12: "arm", 0x0100000C: "arm64"}
+
+
+def macho_info(path: Path) -> dict | None:
+    """Architectures of a Mach-O (thin or universal) binary: arm64 native, x86_64 needs Rosetta on Apple Silicon."""
+    try:
+        with open(path, "rb") as f:
+            head = f.read(4096)
+    except OSError:
+        return None
+    if len(head) < 8:
+        return None
+    magic = head[:4]
+    if magic in (b"\xca\xfe\xba\xbe", b"\xca\xfe\xba\xbf"):          # FAT (big-endian); 0xcafebabe is also Java .class
+        n = struct.unpack_from(">I", head, 4)[0]
+        if not 0 < n < 8:
+            return None
+        step = 20 if magic == b"\xca\xfe\xba\xbe" else 32
+        archs = [MACHO_CPU.get(struct.unpack_from(">I", head, 8 + i * step)[0], "?") for i in range(n)]
+    elif magic in (b"\xcf\xfa\xed\xfe", b"\xce\xfa\xed\xfe"):        # thin, little-endian
+        archs = [MACHO_CPU.get(struct.unpack_from("<I", head, 4)[0], "?")]
+    else:
+        return None
+    return dict(arch="+".join(archs), managed=False, macho=True, rosetta="arm64" not in archs)
 
 
 def grep_file(path: Path, patterns: list[bytes], limit_mb: int = 400, budget_s: float = 6.0) -> dict[bytes, bytes]:
@@ -354,6 +423,8 @@ KNOWN = {
     "half-life 2": ("Source SDK 2013 mods (C++), maps with Hammer", "source.md"),
     "doom": ("WAD/PK3 mods with a source port (GZDoom/UZDoom)", "misc-engines.md"),
     "minecraft": ("Fabric (Mixin) or NeoForge", "minecraft.md"),
+    "minecraft launcher": ("Java Edition: Fabric (Mixin) or NeoForge. On macOS the .app is only the launcher - the game is Java under "
+                           "~/Library/Application Support/minecraft (a Prism Launcher instance keeps mods isolated)", "minecraft.md"),
 }
 
 # save/profile folders that don't follow the game's name ({profile}, {documents}, {appdata}, {localappdata})
@@ -404,7 +475,28 @@ ENGINES = {
     "defold": ("Defold", "misc-engines.md", "unpack game.arcd; Lua scripts"),
     "cocos": ("Cocos2d-x", "native.md", "Lua/JS scripts if bundled; else native hooks"),
     "haxe": ("Haxe/OpenFL/HaxeFlixel", "misc-engines.md", "assets/ overrides; hscript mod loaders where present (Polymod)"),
+    "wine": ("Windows game in a Wine wrapper", "macos.md", "it is a Windows build: mod it with the Windows route for its engine inside the wrapper's drive_c, drive it with `um mac`"),
     "native": ("Unknown native engine", "native.md", "proxy-DLL loader + function hooks (MinHook/SafetyHook), memory reading; Ghidra/IDA + x64dbg + Cheat Engine"),
+}
+
+
+# macOS bundles: where the route differs from the Windows default (Mac builds of the same engines)
+MAC_ROUTES = {
+    "unity-mono": "BepInEx 5 macOS build, launched via run_bepinex.sh (Doorstop = DYLD_INSERT_LIBRARIES, so `um mac sign-info` must say "
+                  "allowed); C# plugins + HarmonyX; read Contents/Resources/Data/Managed/Assembly-CSharp.dll with ilspycmd (dotnet tool)",
+    "unity-il2cpp": "recover types with Cpp2IL / Il2CppDumper from GameAssembly.dylib + global-metadata.dat; Mac loader support is thin, so "
+                    "hook live with Frida (frida-il2cpp-bridge) or ship asset mods (AssetRipper/UABEA)",
+    "unreal": "pak mods in Contents/UE/<Project>/Content/Paks/~mods (FModel, repak/retoc); UE4SS is Windows-only, so code hooks mean a "
+              "DYLD dylib (see native)",
+    "godot": "recover the project with GDRE Tools (runs on macOS); the PCK is Contents/Resources/*.pck - overlay it or use Godot Mod Loader",
+    "gamemaker": "UndertaleModTool / UndertaleModCli (.NET, runs on macOS) on Contents/Resources/game.ios",
+    "xna-fna": "managed assemblies sit in Contents/Resources or Contents/MonoBundle: ILSpy + MonoMod/Harmony; tModLoader, SMAPI and "
+               "Everest all ship macOS builds",
+    "dotnet": "managed assemblies in Contents/Resources or Contents/MonoBundle: ILSpy + Harmony/MonoMod",
+    "electron": "`npx @electron/asar extract Contents/Resources/app.asar out/`, patch JS, repack; re-sign the copy ad-hoc if it is hardened",
+    "java": "decompile jars (Vineflower/CFR, runs anywhere Java runs); patch with the game's loader or Mixin/ASM",
+    "native": "DYLD_INSERT_LIBRARIES dylib (only if `um mac sign-info` allows it) with fishhook (imported symbols) or Dobby/frida-gum "
+              "(inline); Frida to probe live; Ghidra/Hopper + lldb to read",
 }
 
 
@@ -420,7 +512,9 @@ def detect(ix: Index) -> tuple[list[tuple[str, int, list[str], dict]], dict]:
         hits.append((key, score, ev, det))
 
     # Unity
-    data_dirs = [d for d in {"/".join(f.split("/")[:-1]) for f in ix.find("*_data/globalgamemanagers", "*_data/data.unity3d", "*_data/maindata")}]
+    data_dirs = [d for d in {"/".join(f.split("/")[:-1]) for f in ix.find("*_data/globalgamemanagers", "*_data/data.unity3d", "*_data/maindata",
+                                                                          "contents/resources/data/globalgamemanagers",
+                                                                          "contents/resources/data/data.unity3d")}]
     if ix.has("*unityplayer.dll", "*unityplayer.so", "*unityplayer.dylib") or data_dirs:
         dd = data_dirs[0] if data_dirs else ""
         il2cpp = ix.has("*gameassembly.dll", "*gameassembly.so", "*gameassembly.dylib", "*il2cpp_data/metadata/global-metadata.dat")
@@ -435,10 +529,11 @@ def detect(ix: Index) -> tuple[list[tuple[str, int, list[str], dict]], dict]:
         if il2cpp:
             add("unity-il2cpp", 100, ["UnityPlayer + GameAssembly / global-metadata.dat"], **det)
         else:
-            add("unity-mono", 100, ["UnityPlayer + Managed/Assembly-CSharp.dll" if ix.has("*_data/managed/assembly-csharp.dll") else "UnityPlayer"], **det)
+            add("unity-mono", 100, ["UnityPlayer + Managed/Assembly-CSharp.dll" if ix.has("*_data/managed/assembly-csharp.dll", "*/data/managed/assembly-csharp.dll") else "UnityPlayer"], **det)
 
     # Unreal
-    shipping = ix.find("*/binaries/win64/*-win64-shipping.exe", "*/binaries/win64/*-wingdk-shipping.exe", "*/binaries/linux/*-linux-shipping")
+    shipping = ix.find("*/binaries/win64/*-win64-shipping.exe", "*/binaries/win64/*-wingdk-shipping.exe", "*/binaries/linux/*-linux-shipping",
+                       "contents/macos/*-mac-shipping", "*/binaries/mac/*-mac-shipping")
     paks = ix.find("*/content/paks/*.pak", "*/content/paks/*.utoc")
     if shipping or paks or ix.has_dir("engine/binaries/thirdparty"):
         det = {}
@@ -463,14 +558,14 @@ def detect(ix: Index) -> tuple[list[tuple[str, int, list[str], dict]], dict]:
             add("godot", 100, [p], version=v)
             break
     else:
-        for exe in ix.find("*.exe", "*.x86_64")[:6]:
+        for exe in ix.find("*.exe", "*.x86_64", "contents/macos/*")[:6]:
             v = godot_pck(ix.path(exe))
             if v:
                 add("godot", 100, [f"{exe} (embedded pck)"], version=v)
                 break
 
     # GameMaker
-    for name in ("data.win", "game.unx", "game.ios", "game.droid", "assets/game.unx"):
+    for name in ("data.win", "game.unx", "game.ios", "game.droid", "assets/game.unx", "contents/resources/game.ios"):
         if name in ix.files:
             det = {}
             try:
@@ -484,15 +579,15 @@ def detect(ix: Index) -> tuple[list[tuple[str, int, list[str], dict]], dict]:
             break
 
     # RPG Maker
-    if ix.has("www/js/rpg_core.js", "js/rpg_core.js"):
+    if ix.has("www/js/rpg_core.js", "js/rpg_core.js", "*/app.nw/js/rpg_core.js", "*/app.nw/www/js/rpg_core.js"):
         add("rpgmaker-mvmz", 100, ["rpg_core.js (MV)"], version="MV")
-    elif ix.has("js/rmmz_core.js", "www/js/rmmz_core.js"):
+    elif ix.has("js/rmmz_core.js", "www/js/rmmz_core.js", "*/app.nw/js/rmmz_core.js"):
         add("rpgmaker-mvmz", 100, ["rmmz_core.js (MZ)"], version="MZ")
     if ix.has("game.rgssad", "game.rgss2a", "game.rgss3a", "data/scripts.rxdata", "data/scripts.rvdata", "data/scripts.rvdata2"):
         add("rpgmaker-rgss", 100, ix.find("game.rgss*", "data/scripts.r*")[:2])
 
     # Ren'Py
-    if ix.has_dir("renpy") and ix.has_dir("game"):
+    if (ix.has_dir("renpy") and ix.has_dir("game")) or (ix.has_dir("*/autorun/renpy") and ix.has_dir("*/autorun/game")):
         add("renpy", 100, ["renpy/ + game/"], archives=len(ix.find("game/*.rpa")))
 
     # XNA / FNA / MonoGame / .NET
@@ -555,14 +650,15 @@ def detect(ix: Index) -> tuple[list[tuple[str, int, list[str], dict]], dict]:
         add("frostbite", 90, ix.find("data/cas.cat", "*layout.toc")[:1])
 
     # Electron / NW.js / web
-    if ix.has("resources/app.asar", "resources/app/package.json", "package.nw", "nw.dll", "*/nw.dll"):
+    if ix.has("resources/app.asar", "resources/app/package.json", "package.nw", "nw.dll", "*/nw.dll",
+              "contents/resources/app.asar", "contents/resources/app/package.json", "contents/resources/app.nw/package.json"):
         add("electron", 90, ix.find("resources/app.asar", "resources/app/package.json", "package.nw", "nw.dll")[:2],
             construct=ix.has("*c3runtime.js", "*c2runtime.js"), phaser=ix.has("*phaser*.js"))
     elif ix.has("index.html") and ix.has("*.js") and not hits:
         add("electron", 50, ["index.html + js"])
 
     # LÖVE, Java, Defold, Cocos, Haxe
-    if ix.has("love.dll", "*.love", "lovec.exe"):
+    if ix.has("love.dll", "*.love", "lovec.exe", "contents/frameworks/love.framework/*"):
         add("love2d", 95, ix.find("love.dll", "*.love")[:1])
     jars = ix.find("*.jar")
     if jars and (ix.has_dir("jre", "jre/*", "jdk*", "java*") or len(jars) <= 5):
@@ -573,6 +669,15 @@ def detect(ix: Index) -> tuple[list[tuple[str, int, list[str], dict]], dict]:
         add("cocos", 90, ix.find("*libcocos2d*.dll", "*cocos2d*.dll")[:1])
     if ix.has("lime.ndll", "*lime.hdll"):
         add("haxe", 80, ix.find("lime.ndll", "*lime.hdll")[:1])
+
+    # macOS bundles: Mach-O arch (Rosetta?) and Windows games wrapped in Wine (CrossOver/Wineskin/Whisky ports)
+    for e in [f for f in ix.files if f.startswith("contents/macos/")][:8]:
+        info = macho_info(ix.path(e))
+        if info:
+            facts.setdefault("executables", {})[e] = info
+    if ix.has_dir("*drive_c") or ix.has("*/wineskin*", "*/wswine*", "*/cxbottle.conf"):
+        facts["wine_wrapper"] = True
+        add("wine", 60, (ix.find("*/cxbottle.conf", "*/wineskin*") or ["drive_c/ inside the bundle"])[:1])
 
     if not hits:
         add("native", 10, ["no known engine signature"])
@@ -601,7 +706,12 @@ def save_hints(name: str, det: dict) -> list[str]:
         if local:
             cands += [Path(local) / n, Path(local) / n / "Saved"]
     if is_mac():
-        cands += [Path.home() / "Library/Application Support" / n for n in names]
+        lib = Path.home() / "Library"
+        cands += [lib / "Application Support" / n for n in names]
+        if det.get("company") and det.get("product"):        # Unity on macOS
+            cands.append(lib / "Application Support" / det["company"] / det["product"])
+        if det.get("bundle_id"):
+            cands += [lib / "Application Support" / det["bundle_id"], lib / "Caches" / det["bundle_id"]]
     if not is_windows() and not is_wsl():
         cands += [Path.home() / ".local/share" / n for n in names] + [Path.home() / ".config" / n for n in names]
     out, seen = [], set()
@@ -622,6 +732,12 @@ def scan(query: str) -> dict:
     hits, facts = detect(ix)
     key, score, ev, det = hits[0]
     label, playbook, route = ENGINES[key]
+    mac_bundle = root.suffix == ".app" or "contents/info.plist" in ix.files
+    if mac_bundle:
+        route = MAC_ROUTES.get(key, route)
+        from um.mac import bundle_info, sign_info
+        binfo = bundle_info(root) if root.suffix == ".app" else {}
+        det = {**det, "bundle_id": binfo.get("CFBundleIdentifier"), "bundle_version": binfo.get("CFBundleShortVersionString")}
     anti = [n for n, pats in ANTI_CHEAT if ix.has(*pats) or ix.has_dir(*[p.rstrip("/*") for p in pats if p.endswith("/*")])]
     loaders = [n for n, pats in LOADERS if ix.has(*pats) or ix.has_dir(*[p.rstrip("/*") for p in pats if p.endswith("/*")])]
     moddirs = [d for d in MOD_DIRS if d in ix.dirs]
@@ -632,10 +748,13 @@ def scan(query: str) -> dict:
     routes = []
     if known:
         routes.append(dict(route=known[0], playbook=known[1], why="known game"))
-    if not known or known[1] != playbook or key == "native":
+    if (not known or known[1] != playbook or key == "native") and not (mac_bundle and known and key == "native"):
         routes.append(dict(route=route, playbook=playbook, why=f"engine: {label}"))
     if key not in ("native",):
-        routes.append(dict(route=ENGINES["native"][2], playbook="native.md", why="fallback when no loader reaches what you need"))
+        routes.append(dict(route=MAC_ROUTES["native"] if mac_bundle else ENGINES["native"][2], playbook="native.md",
+                           why="fallback when no loader reaches what you need"))
+    if mac_bundle:
+        routes.append(dict(route="macOS specifics: signing, Rosetta, sandbox, permissions, `um mac` tools", playbook="macos.md", why="Mac build"))
     warnings = []
     if len(ix.files) < 5:
         warnings.append("the install folder is (nearly) empty: the game is not fully installed, or lives elsewhere")
@@ -644,12 +763,26 @@ def scan(query: str) -> dict:
                         "many titles need the anti-cheat disabled via an official offline launch option - do not bypass it")
     if online:
         warnings.append(f"'{online}' is an online competitive game: modding its client breaks the ToS and gets accounts banned - stop, or use official tools only (Workshop/creative modes)")
+    signing = None
+    if mac_bundle and root.suffix == ".app":
+        signing = sign_info(root)
+        needs_code = key in ("unity-mono", "unity-il2cpp", "unreal", "native", "cryengine", "cocos", "dotnet", "xna-fna")
+        if not signing["dyld_allowed"] and needs_code and not (known and known[1] != "native.md"):
+            warnings.append("code signing blocks dylib injection: " + signing["injection"])
+        elif signing["app_store"] or signing["sandboxed"]:
+            warnings.append(signing["injection"])
+        if signing["sandboxed"] and det.get("bundle_id"):
+            warnings.append(f"sandboxed: saves/config live in ~/Library/Containers/{det['bundle_id']}/Data (macOS may ask before an app reads it)")
+    rosetta = [k for k, v in facts.get("executables", {}).items() if v.get("rosetta")]
+    if rosetta and os.uname().machine == "arm64":
+        warnings.append(f"Intel-only binary ({rosetta[0]}): runs under Rosetta, so injected dylibs and native tools must be x86_64 too")
     if any(l == "ScriptHookV" for l in loaders) and "rage" in key:
         warnings.append("ScriptHookV only works in story mode; launch GTA offline")
     report = dict(
         name=name, store=game.get("store"), appid=game.get("appid"), path=str(root),
         engine=dict(key=key, label=label, confidence=score, evidence=ev, **{k: v for k, v in det.items() if v not in (None, "")}),
         other_engine_signals=[dict(key=h[0], evidence=h[2]) for h in hits[1:4]],
+        signing={k: signing[k] for k in ("signed", "team", "hardened", "library_validation", "sandboxed", "app_store", "dyld_allowed")} if signing else None,
         anti_cheat=anti, mod_loaders_installed=loaders, mod_folders=moddirs,
         workshop=game.get("workshop"), saves=save_hints(name, det),
         executables=facts.get("executables", {}), routes=routes, warnings=warnings,
@@ -672,6 +805,12 @@ def format_report(r: dict) -> str:
     ex = r.get("executables") or {}
     if ex:
         lines.append("  exes:      " + ", ".join(f"{k} [{v['arch']}{', .NET' if v['managed'] else ''}]" for k, v in list(ex.items())[:5]))
+    sg = r.get("signing")
+    if sg:
+        lines.append("  signing:   " + ("unsigned" if not sg["signed"] else f"team {sg['team'] or 'ad-hoc'}"
+                                        + (", hardened runtime" if sg["hardened"] else "") + (", sandboxed" if sg["sandboxed"] else "")
+                                        + (", App Store" if sg["app_store"] else ""))
+                     + f"; dylib injection {'allowed' if sg['dyld_allowed'] else 'blocked'}")
     lines.append(f"  anti-cheat: {', '.join(r['anti_cheat']) or 'none found'}")
     lines.append(f"  loaders:   {', '.join(r['mod_loaders_installed']) or 'none installed'}")
     if r["mod_folders"]:
@@ -696,7 +835,7 @@ def main(args):
         if args.json:
             print(json.dumps(games, indent=2))
         elif not games:
-            print("no Steam/Epic/Xbox installs found; pass a game folder to `um scan <path>`")
+            print("no Steam/Epic/Xbox installs" + (" or .app games" if is_mac() else "") + " found; pass a game folder to `um scan <path>`")
         else:
             for g in sorted(games, key=lambda g: (g["name"] or "").lower()):
                 print(f"{g['store']:6} {str(g.get('appid') or ''):>10}  {g['name']}  ->  {g['path']}")
@@ -710,6 +849,6 @@ def main(args):
 def register(sub):
     p = sub.add_parser("scan", help="find installed games; fingerprint engine, anti-cheat, loaders, saves, routes")
     p.add_argument("game", nargs="?", help="name (fuzzy) or install folder")
-    p.add_argument("--list", action="store_true", help="list installed games (Steam, Epic, Xbox)")
+    p.add_argument("--list", action="store_true", help="list installed games (Steam, Epic, Xbox; .app games on macOS)")
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=main)
