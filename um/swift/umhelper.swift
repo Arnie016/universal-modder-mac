@@ -6,6 +6,7 @@
 //   umhelper front                      pid + name of the frontmost app
 //   umhelper drive --pid N              line protocol on stdin (WinDrive-compatible, see DRIVE below)
 //   umhelper record --window ID --out F.mov [--seconds S] [--fps 30] [--no-audio] [--cursor]
+//   umhelper stream --window ID [--port 7777] [--width 640] [--fps 20]   live JPEG frames + input over 127.0.0.1 TCP
 //
 // Coordinates: CoreGraphics global points, top-left origin. Screenshots from `screencapture -l` are in
 // pixels (2x on Retina), so drive's click/move take *screenshot pixels* relative to the window and divide by
@@ -14,7 +15,9 @@ import AppKit
 import ApplicationServices
 import AVFoundation
 import CoreGraphics
+import CoreImage
 import Foundation
+import Network
 import ScreenCaptureKit
 
 setvbuf(stdout, nil, _IOLBF, 0)
@@ -362,6 +365,173 @@ func record() {
     app.run()
 }
 
+
+// ---------------------------------------------------------------------------------------------- stream
+
+// Live view of one window for another program (e.g. a Minecraft mod that shows the game on an in-world screen).
+// TCP on 127.0.0.1 only. Server -> client: [u32 big-endian length][JPEG] per frame. Client -> server: text lines
+//   click U V [right] | down U V | up U V | move U V   (U,V in 0..1 of the window) | rel DX DY | key NAME down|up | type TEXT
+// Input goes to the window's process with CGEvent.postToPid, so the game does not need focus (Accessibility required).
+@available(macOS 14.0, *)
+final class Streamer: NSObject, SCStreamOutput, SCStreamDelegate, @unchecked Sendable {
+    var stream: SCStream?
+    var listener: NWListener?
+    var conns: [ObjectIdentifier: NWConnection] = [:]
+    var busy: Set<ObjectIdentifier> = []
+    let lock = NSLock()
+    let ci = CIContext(options: [.cacheIntermediates: false])
+    var pid: Int32 = 0
+    var window: CGRect = .zero
+    var frames = 0
+    let q = DispatchQueue(label: "umhelper.stream")
+
+    @MainActor
+    func start(windowID: UInt32, port: UInt16, width: Int, fps: Int) async throws {
+        let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
+        guard let win = content.windows.first(where: { $0.windowID == windowID }) else { fail("window \(windowID) not found") }
+        pid = win.owningApplication?.processID ?? 0
+        window = win.frame
+        let filter = SCContentFilter(desktopIndependentWindow: win)
+        let cfg = SCStreamConfiguration()
+        cfg.width = width & ~1
+        cfg.height = Int(Double(width) * win.frame.height / win.frame.width) & ~1
+        cfg.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(fps))
+        cfg.pixelFormat = kCVPixelFormatType_32BGRA
+        cfg.showsCursor = false
+        cfg.queueDepth = 3
+        let s = SCStream(filter: filter, configuration: cfg, delegate: self)
+        try s.addStreamOutput(self, type: .screen, sampleHandlerQueue: q)
+        try await s.startCapture()
+        stream = s
+        let params = NWParameters.tcp
+        params.requiredLocalEndpoint = NWEndpoint.hostPort(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: port)!)
+        params.allowLocalEndpointReuse = true
+        let l = try NWListener(using: params)
+        l.newConnectionHandler = { [weak self] c in self?.accept(c) }
+        l.start(queue: q)
+        listener = l
+        json(["listening": "127.0.0.1:\(port)", "pid": pid, "window": windowID, "width": cfg.width, "height": cfg.height, "fps": fps])
+    }
+
+    func accept(_ c: NWConnection) {
+        let id = ObjectIdentifier(c)
+        lock.lock(); conns[id] = c; lock.unlock()
+        c.stateUpdateHandler = { [weak self] st in
+            if case .failed = st { self?.drop(id) }
+            if case .cancelled = st { self?.drop(id) }
+        }
+        c.start(queue: q)
+        receive(c, buffer: Data())
+    }
+
+    func drop(_ id: ObjectIdentifier) { lock.lock(); conns[id] = nil; busy.remove(id); lock.unlock() }
+
+    func receive(_ c: NWConnection, buffer: Data) {
+        c.receive(minimumIncompleteLength: 1, maximumLength: 4096) { [weak self] data, _, done, err in
+            guard let self else { return }
+            var buf = buffer
+            if let d = data { buf.append(d) }
+            while let nl = buf.firstIndex(of: 10) {
+                let line = String(decoding: buf[buf.startIndex..<nl], as: UTF8.self)
+                buf = Data(buf[buf.index(after: nl)...])
+                self.handle(line.trimmingCharacters(in: .whitespacesAndNewlines))
+            }
+            if done || err != nil { c.cancel(); return }
+            self.receive(c, buffer: buf)
+        }
+    }
+
+    // window-relative 0..1 -> global point (current window position, it may have moved)
+    func point(_ u: Double, _ v: Double) -> CGPoint {
+        let r = mainWindow(pid)?.bounds ?? window
+        return CGPoint(x: r.minX + CGFloat(u) * r.width, y: r.minY + CGFloat(v) * r.height)
+    }
+
+    func send(_ e: CGEvent?) { e?.postToPid(pid) }
+
+    func handle(_ line: String) {
+        let p = line.split(separator: " ").map(String.init)
+        guard let cmd = p.first else { return }
+        func n(_ i: Int) -> Double { i < p.count ? Double(p[i]) ?? 0 : 0 }
+        switch cmd {
+        case "click", "down", "up", "move":
+            let pt = point(n(1), n(2))
+            let right = p.contains("right")
+            let (dn, upT, btn): (CGEventType, CGEventType, CGMouseButton) = right ? (.rightMouseDown, .rightMouseUp, .right) : (.leftMouseDown, .leftMouseUp, .left)
+            if cmd == "move" { send(CGEvent(mouseEventSource: src, mouseType: .mouseMoved, mouseCursorPosition: pt, mouseButton: .left)); return }
+            if cmd != "up" { send(CGEvent(mouseEventSource: src, mouseType: dn, mouseCursorPosition: pt, mouseButton: btn)) }
+            if cmd != "down" { send(CGEvent(mouseEventSource: src, mouseType: upT, mouseCursorPosition: pt, mouseButton: btn)) }
+        case "rel":
+            let e = CGEvent(mouseEventSource: src, mouseType: .mouseMoved, mouseCursorPosition: point(0.5, 0.5), mouseButton: .left)
+            e?.setIntegerValueField(.mouseEventDeltaX, value: Int64(n(1)))
+            e?.setIntegerValueField(.mouseEventDeltaY, value: Int64(n(2)))
+            send(e)
+        case "key":
+            guard p.count > 1, let code = keyCode(p[1]) else { return }
+            let down = (p.count > 2 ? p[2] : "tap") != "up"
+            let e = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: down)
+            send(e)
+            if p.count <= 2 { send(CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: false)) }
+        case "type":
+            for ch in line.dropFirst(5).utf16 {
+                var c = ch
+                for down in [true, false] {
+                    let e = CGEvent(keyboardEventSource: src, virtualKey: 0, keyDown: down)
+                    e?.keyboardSetUnicodeString(stringLength: 1, unicodeString: &c)
+                    send(e)
+                }
+            }
+        default: break
+        }
+    }
+
+    func stream(_ stream: SCStream, didOutputSampleBuffer sb: CMSampleBuffer, of type: SCStreamOutputType) {
+        guard type == .screen, sb.isValid, let px = sb.imageBuffer else { return }
+        // ScreenCaptureKit also delivers idle/blank status frames; only encode complete ones
+        if let att = (CMSampleBufferGetSampleAttachmentsArray(sb, createIfNecessary: false) as? [[SCStreamFrameInfo: Any]])?.first,
+           let raw = att[.status] as? Int, let st = SCFrameStatus(rawValue: raw), st != .complete { return }
+        let img = CIImage(cvPixelBuffer: px)
+        guard let jpeg = ci.jpegRepresentation(of: img, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                               options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.7]) else { return }
+        frames += 1
+        var len = UInt32(jpeg.count).bigEndian
+        var packet = Data(bytes: &len, count: 4)
+        packet.append(jpeg)
+        lock.lock()
+        let targets = conns.filter { !busy.contains($0.key) }
+        for id in targets.keys { busy.insert(id) }
+        lock.unlock()
+        for (id, c) in targets {
+            // drop frames for slow readers instead of queueing them (latency over completeness)
+            c.send(content: packet, completion: .contentProcessed { [weak self] _ in
+                self?.lock.lock(); self?.busy.remove(id); self?.lock.unlock()
+            })
+        }
+    }
+
+    func stream(_ stream: SCStream, didStopWithError error: Error) { fail("stream stopped: \(error.localizedDescription)") }
+}
+
+func streamMain() {
+    guard #available(macOS 14.0, *) else { fail("stream needs macOS 14+") }
+    guard let ws = arg("--window"), let wid = UInt32(ws) else { fail("usage: stream --window ID [--port 7777] [--width 640] [--fps 20]") }
+    let st = Streamer()
+    signal(SIGINT) { _ in exit(0) }
+    signal(SIGTERM) { _ in exit(0) }
+    Task { @MainActor in
+        do {
+            try await st.start(windowID: wid, port: UInt16(arg("--port") ?? "7777") ?? 7777,
+                               width: Int(arg("--width") ?? "640") ?? 640, fps: Int(arg("--fps") ?? "20") ?? 20)
+        } catch { fail("could not start: \(error.localizedDescription)") }
+        Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { _ in
+            FileHandle.standardError.write("umhelper: stream \(st.frames) frames, \(st.conns.count) clients\n".data(using: .utf8)!)
+        }
+    }
+    let app = NSApplication.shared
+    app.setActivationPolicy(.accessory)
+    app.run()
+}
+
 // ---------------------------------------------------------------------------------------------- main
 
 let cmd = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "help"
@@ -388,6 +558,8 @@ case "drive":
     drive(pid)
 case "record":
     record()
+case "stream":
+    streamMain()
 default:
     out("umhelper perms|windows|front|drive|record  (see the header of umhelper.swift)")
 }

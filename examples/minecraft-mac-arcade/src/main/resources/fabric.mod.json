@@ -1,0 +1,13 @@
+{
+	"schemaVersion": 1,
+	"id": "macarcade",
+	"version": "${version}",
+	"name": "Mac Arcade",
+	"description": "Any macOS app's window on a giant, playable screen inside Minecraft. Pairs with `um mac stream` from universal-modder-mac.",
+	"authors": ["Arnav Salkade", "Claude Code"],
+	"contact": { "sources": "https://github.com/Arnie016/universal-modder-mac" },
+	"license": "MIT",
+	"environment": "client",
+	"entrypoints": { "client": ["dev.arnav.macarcade.MacArcade"] },
+	"depends": { "fabricloader": ">=0.19.0", "minecraft": "~26.3", "java": ">=25", "fabric-api": "*" }
+}

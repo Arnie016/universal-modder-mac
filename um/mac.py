@@ -7,6 +7,7 @@
     um mac shot --app UZDoom out.png [--scale 0.5]   # one frame of the game window, checked for blank captures
     um mac drive --app UZDoom "focus" "click 640 360" "key escape" "hold w 800" "rel 200 0"
     um mac record --app UZDoom --out ~/caps/take1.mov --seconds 30   # window video + only the game's audio
+    um mac stream --app UZDoom --port 7777        # live JPEG frames + input on 127.0.0.1 (for in-game screens)
     um mac sign-info /Applications/Foo.app        # hardened runtime / library validation / dyld entitlements
     um mac inject /path/Game.app --dylib mod.dylib [-- args]        # DYLD_INSERT_LIBRARIES launch (if allowed)
 
@@ -480,6 +481,13 @@ def main(a):
                 input("recording - press Enter to stop ")
         finally:
             print(json.dumps(rec.stop(), indent=1))
+    elif c == "stream":
+        if not a.window:
+            w = main_window(pid_of(a.app, a.pid))
+            if not w:
+                die("that app has no window")
+            a.window = w["id"]
+        os.execv(helper(), [helper(), "stream", "--window", str(a.window), "--port", str(a.port), "--width", str(a.width), "--fps", str(a.fps)])
     elif c == "sign-info":
         print(json.dumps(sign_info(Path(a.path).expanduser()), indent=2, default=str))
     elif c == "inject":
@@ -533,6 +541,14 @@ def register(sub):
                                                        'key K [tap|down|up] | hold K MS | type TEXT | wheel N | sleep MS')
             q.add_argument("--no-retry", action="store_true")
         q.set_defaults(func=main)
+    q = cs.add_parser("stream", help="serve a window as live JPEG frames on 127.0.0.1 and accept input (game-in-a-game screens)")
+    q.add_argument("--app")
+    q.add_argument("--pid", type=int)
+    q.add_argument("--window", type=int)
+    q.add_argument("--port", type=int, default=7777)
+    q.add_argument("--width", type=int, default=640)
+    q.add_argument("--fps", type=int, default=20)
+    q.set_defaults(func=main)
     q = cs.add_parser("sign-info", help="code signing facts + whether dylib injection can work (read-only)")
     q.add_argument("path")
     q.set_defaults(func=main)
