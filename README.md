@@ -17,10 +17,17 @@
   <img alt="agents" src="https://img.shields.io/badge/agents-Claude%20Code%20·%20Codex%20·%20Cursor%20·%20Gemini-B6FF3B?labelColor=0A0D12">
 </p>
 
-<p align="center">
-  <img src="docs/media/mac-homing-demo.gif" alt="Homing rockets curving into off-axis imps in Freedoom on UZDoom, recorded with um mac record" width="640"><br>
-  <sub>A real capture with <code>um mac record</code>: the <a href="examples/macos-uzdoom-freedoom">Mac Arsenal</a> mod's seeker rockets curve into imps placed 20–55° off-aim. The pickup sprite came from fal.</sub>
-</p>
+<table>
+<tr>
+<td width="50%"><img src="docs/media/mac-homing-demo.gif" alt="Homing rockets curving into off-axis imps in Freedoom on UZDoom"></td>
+<td width="50%"><img src="docs/media/mac-minecraft-seeker.gif" alt="Seeker arrows curving into off-axis husks in Minecraft 26.3"></td>
+</tr>
+<tr>
+<td><sub><b>Doom (UZDoom + Freedoom):</b> <a href="examples/macos-uzdoom-freedoom">Mac Arsenal</a>. Seeker rockets curve into imps placed 20–55° off-aim. The pickup sprite came from fal.</sub></td>
+<td><sub><b>Minecraft 26.3 (Fabric):</b> <a href="examples/minecraft-seeker-fabric">Seeker Wand</a>. A client game test fires straight ahead, and homing arrows take out three off-axis husks (3/3). The texture came from fal.</sub></td>
+</tr>
+</table>
+<p align="center"><sub>Both clips are real captures with <code>um mac record</code> on an M5 Max. Nothing is mocked.</sub></p>
 
 ## Quickstart (Mac)
 ```bash
@@ -59,7 +66,8 @@ no pyobjc and no build step. Playbook: [`skills/mod-any-game/references/engines/
 | `ps`, `launch`, `kill`, `doctor`, `helper` | live UZDoom window, on screen and on another Space |
 | `shot` | a real window capture, and the clear error when permission is off |
 | `record` | the demo above: a 2418×1634 H.264 + AAC `.mov` |
-| Mac Arsenal mod | 3/3 and 2/3 off-axis homing kills, from the mod's log and the engine's screenshots |
+| Mac Arsenal mod (Doom) | 3/3 and 2/3 off-axis homing kills, from the mod's log and the engine's screenshots |
+| Seeker Wand (Minecraft 26.3) | client game test: 3/3 kills on four consecutive runs, with screenshots and a recording |
 | `drive` input | **not yet**: Accessibility was off. `drive rect` and `focus` work; clicks and keys are untested |
 | `inject` | **not yet** run against a real dylib |
 
@@ -175,6 +183,9 @@ audio, both PowerShell with embedded C#.
 <p align="center"><img src="docs/media/pipeline.png" alt="3D route: fal concept to 3D to 16 AoE2 headings. 2D route: fal art to cutout to a 64x26 Terraria sprite in game." width="100%"></p>
 
 ## Built with it
+- **[examples/minecraft-seeker-fabric](examples/minecraft-seeker-fabric)**: *Seeker Wand* for Minecraft 26.3 (Fabric). It
+  fires homing arrows, with a fal texture. Its oracle is a Fabric **client game test**: the real client boots on macOS with
+  no Microsoft account, builds a world, and asserts 3/3 off-axis kills.
 - **[examples/macos-uzdoom-freedoom](examples/macos-uzdoom-freedoom)**: *Mac Arsenal*, the first mod built and verified
   end to end on macOS. It adds a seeker rocket launcher for Freedoom on UZDoom 5, with a fal pickup sprite, a test fixture
   inside the mod, and verification through the engine's own screenshots (it works even on a locked Mac).

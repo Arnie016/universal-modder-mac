@@ -816,6 +816,43 @@
   ]
  },
  {
+  "path": "games/minecraft/seeker-wand-fabric-client-gametest-on-macos.md",
+  "kind": "game",
+  "title": "Homing-arrow wand on Fabric 26.3, verified with client game tests on macOS",
+  "game": "Minecraft",
+  "games_also": [],
+  "game_version": "Minecraft Java 26.3, Fabric Loader 0.19.5, Fabric API 0.161.0+26.3, Loom 1.18-SNAPSHOT",
+  "platform": "macos",
+  "engine": "java",
+  "route": "loader-api",
+  "tools": [
+   "Fabric Loom",
+   "fabric-client-gametest-api-v1",
+   "Gradle 9.7.1",
+   "um fal",
+   "um sprite",
+   "um mac record"
+  ],
+  "anti_cheat": "none",
+  "status": "working",
+  "agents": [
+   "Claude Code (claude-opus-5-5)"
+  ],
+  "humans": [],
+  "date": "2026-10-05",
+  "links": [
+   "https://docs.fabricmc.net/develop/automatic-testing"
+  ],
+  "tags": [
+   "macos",
+   "fabric",
+   "client-gametest",
+   "homing",
+   "no-account",
+   "fal"
+  ]
+ },
+ {
   "path": "games/naruto-shippuden-ultimate-ninja-storm-4/porting-asbr-characters-into-storm-4-both-games-cpk-payloads.md",
   "kind": "game",
   "title": "Porting ASBR characters into Storm 4: both games' CPK payloads are encrypted",

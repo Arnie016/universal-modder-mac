@@ -57,3 +57,10 @@ resource packs. Develop in `com.mojang/development_*_packs` and turn on content-
 - Mashups: the September 2026 "Minecraft inside X" projects either reimplemented Minecraft (Rust rewrites
   matching Java worldgen) or ran it side by side and exchanged state (passthrough). Minecraft's own assets
   were downloaded from Mojang at first run and never redistributed.
+
+## Verify without a human: Fabric client game tests (any OS, no Microsoft account)
+`fabricApi { configureTests { createSourceSet = true; modId = "<id>-test"; enableGameTests = false; eula = true } }` in
+`build.gradle`, then a class implementing `FabricClientGameTest`, registered under the `fabric-client-gametest`
+entrypoint. `./gradlew runClientGameTest` boots the real client, `ctx.worldBuilder().create()` makes a world, `getServer()
+.runCommand(...)` / `runOnServer(...)` set up the scene, `ctx.takeScreenshot(name)` saves proof, and a thrown assertion
+fails the build. It works on macOS (~30 s per run). Worked example: `examples/minecraft-seeker-fabric`.

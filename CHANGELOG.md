@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0: Minecraft on macOS (2026-10-05)
+- `examples/minecraft-seeker-fabric`: a homing-arrow wand for Minecraft 26.3 / Fabric with a fal texture, verified with a
+  Fabric client game test on macOS (3/3 kills, 4 consecutive runs). Field note and a minecraft.md section on client game tests.
+- `um mac record` follows windows across Spaces (desktop-independent window filter) and starts on an NSApplication main
+  thread. `um mac ps`/`shot` find a game's window on another Space.
+- `bin/um` survives macOS hiding `.pth` files in iCloud-synced folders.
+
 ## 0.3.0: macOS port (2026-10-05)
 Forked from [rehan-remade/universal-modder](https://github.com/rehan-remade/universal-modder) at `d60152b`.
 

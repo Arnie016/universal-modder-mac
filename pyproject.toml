@@ -1,6 +1,6 @@
 [project]
 name = "universal-modder"
-version = "0.3.0"
+version = "0.4.0"
 description = "Tools and a shared knowledge base for AI agents that mod games: engine scanner, fal asset generation, sprite and 3D-to-sprite pipelines, window capture, input and recording on Windows and macOS, code-signing-aware Mac bundle scanning, showcase video editing, field notes."
 readme = "README.md"
 keywords = ["game-modding", "macos", "apple-silicon", "ai-agents", "screencapturekit", "reverse-engineering", "fal"]
