@@ -1,0 +1,539 @@
+{
+  "format": 1,
+  "name": "AURORA / twin turbine",
+  "units": "Minecraft model pixels (16 = 1 block)",
+  "axes": "X nose-negative, Y down, Z starboard-positive; rotations XYZ radians about part center",
+  "materials": [
+    {
+      "name": "Porcelain alloy",
+      "texture": "iron_block",
+      "color": "#bacbd0",
+      "metalness": 0.65,
+      "roughness": 0.28
+    },
+    {
+      "name": "Graphite",
+      "texture": "polished_blackstone",
+      "color": "#18232b",
+      "metalness": 0.75,
+      "roughness": 0.31
+    },
+    {
+      "name": "Lagoon enamel",
+      "texture": "cyan_concrete",
+      "color": "#21b6bc",
+      "metalness": 0.45,
+      "roughness": 0.24
+    },
+    {
+      "name": "Ion core",
+      "texture": "sea_lantern",
+      "color": "#83fff2",
+      "metalness": 0.1,
+      "roughness": 0.18,
+      "emissive": 2
+    }
+  ],
+  "parts": [
+    {
+      "name": "Keel",
+      "group": "Chassis",
+      "material": 0,
+      "position": [
+        0,
+        -2,
+        0
+      ],
+      "size": [
+        24,
+        4,
+        10
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Arrow nose",
+      "group": "Chassis",
+      "material": 0,
+      "position": [
+        -16.5,
+        -1.5,
+        0
+      ],
+      "size": [
+        9,
+        3,
+        6
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Cockpit glass",
+      "group": "Cockpit",
+      "material": 1,
+      "position": [
+        -3.5,
+        -5.5,
+        0
+      ],
+      "size": [
+        9,
+        3,
+        6
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Dorsal spine",
+      "group": "Chassis",
+      "material": 2,
+      "position": [
+        7,
+        -4,
+        0
+      ],
+      "size": [
+        12,
+        2,
+        4
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Rear wing",
+      "group": "Chassis",
+      "material": 1,
+      "position": [
+        11,
+        -6,
+        0
+      ],
+      "size": [
+        3,
+        1,
+        17
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Port housing",
+      "group": "Port turbine",
+      "material": 0,
+      "position": [
+        0,
+        -1,
+        -12
+      ],
+      "size": [
+        32,
+        6,
+        6
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Port intake",
+      "group": "Port turbine",
+      "material": 1,
+      "position": [
+        -17.5,
+        -1,
+        -12
+      ],
+      "size": [
+        3,
+        6,
+        6
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Port exhaust",
+      "group": "Port turbine",
+      "material": 1,
+      "position": [
+        18.5,
+        -1,
+        -12
+      ],
+      "size": [
+        5,
+        8,
+        8
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Port plasma",
+      "group": "Port turbine",
+      "material": 3,
+      "position": [
+        21.3,
+        -1,
+        -12
+      ],
+      "size": [
+        0.6,
+        4,
+        4
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Port cowl",
+      "group": "Port turbine",
+      "material": 2,
+      "position": [
+        -2.5,
+        -4.1,
+        -12
+      ],
+      "size": [
+        11,
+        0.6,
+        6.4
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Port brace",
+      "group": "Chassis",
+      "material": 1,
+      "position": [
+        0,
+        0,
+        -8
+      ],
+      "size": [
+        6,
+        2,
+        8
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Port stabilizer",
+      "group": "Fins",
+      "material": 1,
+      "position": [
+        13,
+        -7.5,
+        -12
+      ],
+      "size": [
+        8,
+        7,
+        2
+      ],
+      "rotation": [
+        0,
+        0,
+        -0.17
+      ]
+    },
+    {
+      "name": "Port cooling vane 1",
+      "group": "Port turbine",
+      "material": 1,
+      "position": [
+        5.0,
+        -4.5,
+        -12
+      ],
+      "size": [
+        0.6,
+        1,
+        6.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Port cooling vane 2",
+      "group": "Port turbine",
+      "material": 1,
+      "position": [
+        7.5,
+        -4.5,
+        -12
+      ],
+      "size": [
+        0.6,
+        1,
+        6.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Port cooling vane 3",
+      "group": "Port turbine",
+      "material": 1,
+      "position": [
+        10.0,
+        -4.5,
+        -12
+      ],
+      "size": [
+        0.6,
+        1,
+        6.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Starboard housing",
+      "group": "Starboard turbine",
+      "material": 0,
+      "position": [
+        0,
+        -1,
+        12
+      ],
+      "size": [
+        32,
+        6,
+        6
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Starboard intake",
+      "group": "Starboard turbine",
+      "material": 1,
+      "position": [
+        -17.5,
+        -1,
+        12
+      ],
+      "size": [
+        3,
+        6,
+        6
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Starboard exhaust",
+      "group": "Starboard turbine",
+      "material": 1,
+      "position": [
+        18.5,
+        -1,
+        12
+      ],
+      "size": [
+        5,
+        8,
+        8
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Starboard plasma",
+      "group": "Starboard turbine",
+      "material": 3,
+      "position": [
+        21.3,
+        -1,
+        12
+      ],
+      "size": [
+        0.6,
+        4,
+        4
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Starboard cowl",
+      "group": "Starboard turbine",
+      "material": 2,
+      "position": [
+        -2.5,
+        -4.1,
+        12
+      ],
+      "size": [
+        11,
+        0.6,
+        6.4
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Starboard brace",
+      "group": "Chassis",
+      "material": 1,
+      "position": [
+        0,
+        0,
+        8
+      ],
+      "size": [
+        6,
+        2,
+        8
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Starboard stabilizer",
+      "group": "Fins",
+      "material": 1,
+      "position": [
+        13,
+        -7.5,
+        12
+      ],
+      "size": [
+        8,
+        7,
+        2
+      ],
+      "rotation": [
+        0,
+        0,
+        -0.17
+      ]
+    },
+    {
+      "name": "Starboard cooling vane 1",
+      "group": "Starboard turbine",
+      "material": 1,
+      "position": [
+        5.0,
+        -4.5,
+        12
+      ],
+      "size": [
+        0.6,
+        1,
+        6.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Starboard cooling vane 2",
+      "group": "Starboard turbine",
+      "material": 1,
+      "position": [
+        7.5,
+        -4.5,
+        12
+      ],
+      "size": [
+        0.6,
+        1,
+        6.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Starboard cooling vane 3",
+      "group": "Starboard turbine",
+      "material": 1,
+      "position": [
+        10.0,
+        -4.5,
+        12
+      ],
+      "size": [
+        0.6,
+        1,
+        6.5
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

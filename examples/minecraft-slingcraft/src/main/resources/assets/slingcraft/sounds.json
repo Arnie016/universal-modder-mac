@@ -1,0 +1,28 @@
+{
+  "bloom_call": {
+    "subtitle": "subtitles.slingcraft.bloom_call",
+    "sounds": [
+      {
+        "name": "slingcraft:bloom/call_0",
+        "attenuation_distance": 26
+      },
+      {
+        "name": "slingcraft:bloom/call_1",
+        "attenuation_distance": 26
+      },
+      {
+        "name": "slingcraft:bloom/call_2",
+        "attenuation_distance": 26
+      }
+    ]
+  },
+  "bloom_air": {
+    "subtitle": "subtitles.slingcraft.bloom_air",
+    "sounds": [
+      {
+        "name": "slingcraft:bloom/air",
+        "attenuation_distance": 18
+      }
+    ]
+  }
+}

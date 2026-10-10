@@ -1,0 +1,20 @@
+{
+  "required": true,
+  "package": "dev.arnav.slingcraft.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "BirdBowMixin",
+    "BirdImpactMixin",
+    "DisplayAccess",
+    "GardenPortalMixin",
+    "SiegeExplosionMixin",
+    "SiegeKitMixin"
+  ],
+  "client": [
+    "PigRendererMixin",
+    "RaceHandlingMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

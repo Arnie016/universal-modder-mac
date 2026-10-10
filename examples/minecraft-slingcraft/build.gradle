@@ -31,6 +31,7 @@ dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	if(project.hasProperty("physicsModJar")) runtimeOnly files(project.property("physicsModJar"))
 }
 
 processResources {
@@ -44,4 +45,18 @@ tasks.withType(JavaCompile).configureEach { it.options.release = 25 }
 java {
 	sourceCompatibility = JavaVersion.VERSION_25
 	targetCompatibility = JavaVersion.VERSION_25
+}
+
+loom {
+    runs {
+        server {
+            if (project.hasProperty('worldsServerSmoke')) { runDir "build/run/serverSmoke"; programArgs "nogui" }
+        }
+        client {
+            if (project.hasProperty('siegePlay')) {
+                runDir "run-challenge"
+                programArgs "--username", "Player0", "--quickPlaySingleplayer", "Sling Siege Challenge"
+            }
+        }
+    }
 }

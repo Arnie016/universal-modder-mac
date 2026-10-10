@@ -1,4 +1,7 @@
-build/
 .gradle/
+build/
 run/
+run-siege/
 gen/
+
+run-challenge/
