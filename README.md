@@ -234,4 +234,5 @@ Full reasoning: [`skills/mod-any-game/references/safety.md`](skills/mod-any-game
 - The engine playbooks also draw on the September 2026 wave of AI-built mods, and on how their creators
   explained them in public.
 
-MIT licensed. Fonts: Space Grotesk and JetBrains Mono (SIL OFL).
+MIT licensed, except the 0 A.D. mod in `examples/0ad-blocks/um_blocks/`, which is GPL-2.0-or-later like the game's
+own scripts. Fonts: Space Grotesk and JetBrains Mono (SIL OFL).

@@ -16,7 +16,7 @@ blocks that really block movement, and a squad you command from a hotbar. This p
 um lab validate recipes/0ad-hero-squad
 ```
 
-This checks the format, the sha256 of all 38 files, the licences, the commands against `commands.wit` and every
+This checks the format, the sha256 of all 40 files, the licences, the commands against `commands.wit` and every
 fixture line. If an artifact hash fails, a file changed after the evidence was recorded. Run the tests again,
 then `um lab hash recipes/0ad-hero-squad --write`.
 

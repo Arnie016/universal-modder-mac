@@ -5,8 +5,8 @@
  "machine": "4e5d10c0d0ddc4fb",
  "recipe": {
   "id": "0ad-hero-squad",
-  "version": "0.1.1",
-  "digest": "ecff7ade99eea85161a552e0b057f662a09cac1c8c55f0f02c34ace661fca29b",
+  "version": "0.1.2",
+  "digest": "8ab33e3079a30894863fca9ace815314fda4545a3cd29051acdcac9f70d598f3",
   "artifacts_match": true
  },
  "adapter": {
@@ -41,15 +41,15 @@
  "totals": {
   "turns": 288,
   "commands": 35,
-  "wall_seconds": 14.3
+  "wall_seconds": 12.8
  },
- "transcript_sha256": "cbfc87aeed991db3eea2463e83254309ac09703796f7dd284c4d117bc9b5921a",
+ "transcript_sha256": "e5fadf71e9f84d0abaafa5fe935b7ef59b4bb39b28720a5b32d193ae0b31fc4a",
  "notes": {
   "stop": {
    "stopped": true,
    "exit_code": -15,
-   "cpu_seconds": 5.3,
-   "peak_rss_mb": 203
+   "cpu_seconds": 4.5,
+   "peak_rss_mb": 200
   }
  }
 }

@@ -1,7 +1,7 @@
 {
   "format": "umx-recipe/0.1",
   "id": "0ad-hero-squad",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "title": "Hero mode: play one soldier in first person, build with blocks, command the squad",
   "summary": "Inside the unmodified 0 A.D. engine, you play one Spartan hero in first person with a Minecraft-style HUD (hearts, food, XP, a 9-slot hotbar). You place and break 4 m stone blocks that really block movement, and order your squad to follow, rally, attack, hold or take a formation. The GUI, scripts and agents send the same typed commands.",
   "status": {
@@ -95,11 +95,8 @@
   },
   "licenses": {
     "recipe": "MIT",
-    "code": "MIT (the repository's licence). Open question for the owner: the um_blocks scripts extend 0 A.D.'s GPL-2.0-or-later simulation scripts and may need to be offered under GPL-2.0-or-later when distributed as a mod.",
-    "assets": "Original pixel art and mesh, MIT. Stock 0 A.D. textures (CC-BY-SA-3.0) are referenced by path and loaded from the player's own install, never shipped.",
-    "open_questions": [
-      "GPL-2.0-or-later for the mod scripts (owner decision)"
-    ]
+    "code": "The mod in um_blocks/ (simulation component, GUI scripts, templates, actors) is GPL-2.0-or-later, like 0 A.D.'s own scripts it extends; see um_blocks/LICENSE.txt. The owner chose this on 2026-10-12. The lab scripts (hero_lab.py, blocks_lab.py, make_hud_art.py) are MIT, like the rest of the repository.",
+    "assets": "The block mesh and the HUD pixel art are original and ship inside um_blocks/ under GPL-2.0-or-later; make_hud_art.py, which draws the art, is MIT. Stock 0 A.D. textures (CC-BY-SA-3.0) are referenced by path and loaded from the player's own install, never shipped."
   },
   "artifacts": [
     {
@@ -243,6 +240,16 @@
       "role": "mod manifest (the lab rewrites its dependency to the installed game version)"
     },
     {
+      "path": "um_blocks/LICENSE.txt",
+      "sha256": "3371960c85b28ddfe29f832e1c6ca5de3740dcd0d176140083c94c6be64b07d1",
+      "role": "licence notice: GPL-2.0-or-later for everything in the mod folder"
+    },
+    {
+      "path": "um_blocks/GPL-2.0.txt",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+      "role": "the GNU GPL version 2 text"
+    },
+    {
       "path": "um_blocks/simulation/components/UmCrossover.js",
       "sha256": "7accf90e0b998c7f06addbe0c269df027effeb52a49a77e6e5174badd1714daf",
       "role": "the crossover authority: envelope checks, hero, squad, blocks, hunger, XP, Observe()"
@@ -284,7 +291,7 @@
     },
     {
       "path": "hero_lab.py",
-      "sha256": "52de9f18dee1c7ed99a56afb30d97aa66989c1865a6f4126d8680bb2a3d4f3b3",
+      "sha256": "3029ec500362331c114e3d02833e9a84a8c41b5be0e0871bc8c4936bbdda905e",
       "role": "visual test: real X11 key and mouse input on the running game"
     },
     {
@@ -700,28 +707,28 @@
       "kind": "headless acceptance in the real engine (um lab accept, Linux x86_64, 0 A.D. 0.0.26 from Ubuntu 24.04)",
       "result": "14/14 checks, replay identical",
       "file": "evidence/2026-10-12-accept.json",
-      "sha256": "c586f1ec1de3a295736913fcd360f1af124368115dd3fe6831d5a69e1b9234d0"
+      "sha256": "2405d049afdb47bd35948a88d82eccc8fa326c9482dac4caf6199f7660ce9efc"
     },
     {
       "date": "2026-10-12",
       "kind": "headless acceptance in the real engine (um lab accept, Linux x86_64, 0 A.D. 0.28.0 from the Ubuntu archive; on Ubuntu 24.04 it ran under its own glibc 2.43 loader, with its data and libraries mounted over the standard paths in a private mount namespace)",
       "result": "14/14 checks, replay identical",
       "file": "evidence/2026-10-12-accept-0.28.json",
-      "sha256": "a6bd3ca0d831de6649fad4f4c118c9a9aef4cbe80357ef194a1af0a2dab3c57b"
+      "sha256": "f122cfa00a44b1af34cc4ccfa483ce291af9cc67c680abe9ad5d3fbc701f13b1"
     },
     {
       "date": "2026-10-12",
       "kind": "visual play with real key and mouse input (hero_lab.py, Xvfb, Linux x86_64, 0 A.D. 0.0.26)",
       "result": "21/21 checks, no log errors",
       "file": "evidence/2026-10-12-hero-lab.json",
-      "sha256": "18dd83e16c4c1e341b76cce07ad7462effe7afa34f3da9c328e1708c331688ad"
+      "sha256": "7ce4371545674e8f16116d059b65d216af5c5f3c60103023af7335fbc8177d88"
     },
     {
       "date": "2026-10-12",
       "kind": "MCP client session (official Python SDK mcp 2.3.0, stdio, 0 A.D. 0.0.26)",
       "result": "negotiated 2026-07-28 (server/discover) and 2025-11-25 (initialize); game paused between calls; out-of-recipe command, wrong field type and 500-turn step refused",
       "file": "evidence/2026-10-12-mcp-client.json",
-      "sha256": "435dd1e09cad7a0311a7307208a6a6c2be451038c76ac09c2c72aa9c54e60eb9"
+      "sha256": "72af0866f50091e19a2e5a1cef96154866184720a8e8635ff8e6b6d959a9b82f"
     }
   ]
 }

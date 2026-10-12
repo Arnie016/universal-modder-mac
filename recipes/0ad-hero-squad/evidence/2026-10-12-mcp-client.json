@@ -4,8 +4,8 @@
  "date": "2026-10-12",
  "recipe": {
   "id": "0ad-hero-squad",
-  "version": "0.1.1",
-  "digest": "ecff7ade99eea85161a552e0b057f662a09cac1c8c55f0f02c34ace661fca29b"
+  "version": "0.1.2",
+  "digest": "8ab33e3079a30894863fca9ace815314fda4545a3cd29051acdcac9f70d598f3"
  },
  "client": "mcp 2.3.0",
  "server": "um lab mcp (umx-lab)",

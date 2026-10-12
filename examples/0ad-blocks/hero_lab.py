@@ -99,6 +99,12 @@ class Player:
         return path.name
 
 
+def game_started(g: lab.Game) -> bool:
+    """InitGame has run: the stock StatisticsTracker fills its sequences then. A step sent earlier, while the
+    loading screen is still up, makes the tracker's timer throw "this.sequences is undefined"."""
+    return bool(g.js("let s = QueryPlayerIDInterface(1, IID_StatisticsTracker); return !!(s && s.sequences);"))
+
+
 def wait_for(clock: Clock, test, timeout: float = 8.0):
     """Poll the simulation until test(observation) is true; return the last observation."""
     end = time.monotonic() + timeout
@@ -131,8 +137,8 @@ def main():
     checks, shots, notes = {}, [], {}
     clock = None
     try:
-        for _ in range(120):          # the rendered game answers before the map's entities exist
-            if lab.spearman(g):
+        for _ in range(120):          # the rendered game answers before its map and InitGame are done
+            if lab.spearman(g) and game_started(g):
                 break
             time.sleep(1)
         clock = Clock(g)

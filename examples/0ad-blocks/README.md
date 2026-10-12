@@ -120,3 +120,8 @@ python3 blocks_lab.py --exe "/Applications/0 A.D..app/Contents/MacOS/pyrogenesis
 0 A.D. is © Wildfire Games. Its code is GPL-2.0-or-later and its art is CC BY-SA 3.0. This folder ships no
 game files. The template only refers to a stock actor by path. The scenario map that the test writes, a copy of
 Arcadia plus the blocks, stays in your local mod folder and is not committed.
+
+The mod in `um_blocks/` is GPL-2.0-or-later, like the game scripts it extends: see `um_blocks/LICENSE.txt` and
+`um_blocks/GPL-2.0.txt`. That covers its scripts, templates, actors, the block mesh and the HUD pixel art. The
+Python scripts beside it (`hero_lab.py`, `blocks_lab.py`, `make_hud_art.py`) are MIT, like the rest of the
+repository.
