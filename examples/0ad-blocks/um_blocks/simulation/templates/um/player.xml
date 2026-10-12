@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Entity parent="units/spart/hero_leonidas">
+  <Identity>
+    <GenericName>You</GenericName>
+    <Tooltip>The hero you play in first person (Universal Modder crossover).</Tooltip>
+  </Identity>
+</Entity>

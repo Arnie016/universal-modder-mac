@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Universal Modder crossover: hero-mode HUD. The logic is in gui/session/um_hud.js. -->
+<!-- The two empty containers are not ghost: a ghost parent hides its children from the mouse,
+     and empty objects never take the mouse themselves. -->
+<object name="umHud" size="0 0 100% 100%" z="60">
+	<object name="umPlayButton" type="button" style="StoneButton" size="50%-110 84 50%+110 114" z="70">
+		<translatableAttribute id="tooltip">Play one hero in first person and command your squad from a hotbar.</translatableAttribute>
+		<action on="Press">umToggle();</action>
+	</object>
+	<object name="umHero" size="0 0 100% 100%" hidden="true">
+		<object name="umCrosshair" type="image" sprite="stretched:um/crosshair.png" size="50%-16 50%-16 50%+16 50%+16" ghost="true"/>
+		<object name="umHint" type="text" font="sans-stroke-12" textcolor="255 255 255" text_align="left" text_valign="top" size="10 44 50%-120 140" ghost="true"/>
+		<object name="umFlash" type="text" font="sans-bold-stroke-14" textcolor="255 255 255" text_align="center" text_valign="center" size="50%-320 100%-132 50%+320 100%-108" ghost="true"/>
+		<object name="umItemName" type="text" font="sans-bold-stroke-14" textcolor="255 255 255" text_align="center" text_valign="center" size="50%-240 100%-106 50%+240 100%-84" ghost="true"/>
+		<repeat count="10">
+			<object name="umHeart[n]" type="image" sprite="stretched:um/heart_full.png" ghost="true"/>
+		</repeat>
+		<repeat count="10">
+			<object name="umFood[n]" type="image" sprite="stretched:um/food_full.png" ghost="true"/>
+		</repeat>
+		<object name="umLevel" type="text" font="sans-bold-stroke-14" textcolor="128 255 48" text_align="center" text_valign="center" size="50%-20 100%-80 50%+20 100%-60" ghost="true"/>
+		<object name="umXpBack" type="image" sprite="color:0 0 0 170" size="50%-198 100%-57 50%+198 100%-52" ghost="true">
+			<object name="umXpFill" type="image" sprite="color:128 255 48 255" size="0 0 0% 100%" ghost="true"/>
+		</object>
+		<repeat count="9">
+			<object name="umSlot[n]" type="image" sprite="stretched:um/slot.png" ghost="true">
+				<object name="umSlotIcon[n]" type="image" size="6 6 100%-6 100%-6" ghost="true"/>
+				<object name="umSlotCount[n]" type="text" font="sans-bold-stroke-13" textcolor="255 255 255" text_align="right" text_valign="bottom" size="0 0 100%-4 100%-1" ghost="true"/>
+			</object>
+		</repeat>
+		<object name="umSlotSelected" type="image" sprite="stretched:um/slot_selected.png" ghost="true"/>
+	</object>
+</object>

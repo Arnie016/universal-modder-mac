@@ -20,7 +20,54 @@ ImageMagick's `import` for capture, so it does not run on macOS yet. It installs
 The installer writes the installed game's version (from `mods/public/mod.json`) into the mod's dependency, because
 0 A.D. refuses mods declared for another version.
 
-## Result
+## Hero mode: play one soldier in first person and command the squad
+
+`um_blocks` also adds a hero mode to the real game, and `hero_lab.py` plays it with real mouse and keyboard input
+on an X display (xdotool) and saves screenshots.
+
+- **Enter:** click **Play as hero** at the top of the screen. A hero spawns next to your soldiers, the nearest
+  soldiers (up to 12, within 40 m) become your squad and follow you, and the camera switches to the engine's own
+  first-person view (`Engine.CameraFollowFPS`).
+- **HUD:** 10 hearts (the hero's health), 10 drumsticks (your food stockpile: the hero eats 1 food every 10 s and
+  starves without it), an XP bar (1 per block placed, 2 per block broken), and a 9-slot hotbar. The art is original
+  16 x 16 pixel art drawn by `make_hud_art.py`.
+- **Keys:** W walk, S stop, A/D turn, 1–9 pick a slot, left click use, right click break, V first/third person,
+  Tab tactical map (the normal RTS view and panels), Esc leave.
+- **Hotbar:** granite block, pickaxe, sword (you and the squad attack what you look at, or the nearest enemy),
+  banner (the squad marches where you look), horn (follow me), box formation, line formation, shield (hold
+  ground), map.
+
+How it is built:
+
+| piece | where | reused or new |
+|---|---|---|
+| movement, pathfinding, formations, combat, health, resources, saving | 0 A.D.'s own components and commands (`walk`, `guard`, `formation`, `attack`, `stance`, `stop`) | reused, unmodified engine 0.0.26 |
+| first-person camera | `Engine.CameraFollowFPS` (in the engine since before A23, unused by the stock GUI) | reused |
+| `um-spawn`, `um-possess`, `um-face`, `um-move`, `um-place`, `um-break`, `um-squad` | `simulation/helpers/UmCommands.js`, `simulation/components/UmCrossover.js` | new |
+| hotbar, hearts, hunger, XP, input | `gui/session/um_hud.js`, `gui/session/session_objects/um_hud.xml` | new |
+
+Every action is one typed command (JSON) with an envelope: `src`, `seq`, `session`, `epoch`. The GUI sends it with
+`Engine.PostNetworkCommand`; a script sends the same JSON through the RL interface. The `UmCrossover` system
+component is the single authority for the hero, the squad and XP; it ignores a repeated `seq` (`duplicate`),
+refuses commands from another game (`stale-session`) or from before the last load (`stale-epoch`), and is saved
+with the game. In hero mode the camera keys move from W/A/S/D to the arrow keys through the `mod` config
+namespace, which is never written to the player's `user.cfg`.
+
+### Result
+
+`hero_lab.py` on 2026-10-12, 0 A.D. 0.0.26, Linux, Xvfb with software rendering, real xdotool input: **21 of 21
+checks passed** (`hero_report.json`). Among them: the button click spawns the hero and a 4-soldier squad; a click
+places a block (−10 stone, +1 XP) and the pickaxe breaks it (+10 stone); W walks 22 m and D turns 1.07 rad; slot 6
+puts all 4 soldiers in a box formation; with the horn they follow at a median 11.6 m; the sword takes an enemy
+spearman from 100 to 87 HP; after Shift+F5 and Shift+F8 the saved block is back, the unsaved one is gone, the epoch
+went from 0 to 1, and the hero and squad are intact; a script's `um-place` works through the same handler, its
+repeated `seq` is ignored, and a command with the old epoch is refused.
+
+Fixtures, stated in the report: the enemy spearman is spawned by the test 14 m in front of the hero, and two
+envelope checks come from the script. **Not shown:** a human playtest (feel, readability, camera height), the
+macOS build, and multiplayer (the epoch counter assumes a single-player game).
+
+## Block lab result
 
 Tested on 2026-10-12 with 0 A.D. 0.0.26 (Ubuntu `0ad 0.0.26-6ubuntu0.24.04.1`), headless on Linux, on the
 stock Arcadia scenario. Two separate game processes were used. The second one reported a sim clock of 0 ms

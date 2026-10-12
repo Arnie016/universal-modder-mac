@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<actor version="1">
+  <castshadow/>
+  <group>
+    <variant frequency="100" name="Base">
+      <mesh>um/block_4m.dae</mesh>
+      <textures><texture file="props/wrld_block_limestone.dds" name="baseTex"/></textures>
+    </variant>
+  </group>
+</actor>
