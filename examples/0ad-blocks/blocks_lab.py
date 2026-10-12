@@ -46,17 +46,20 @@ LANE = 40.0         # walk length, metres
 
 
 class Game:
-    def __init__(self, exe: str, port: int, scenario: str, log: Path):
+    def __init__(self, exe: str, port: int, scenario: str, log: Path, mods=(MOD,), extra=(), env=None, visual=False):
         self.url = f"http://127.0.0.1:{port}"
         with socket.socket() as s:     # a game left on this port would answer for us and fake every result
             if s.connect_ex(("127.0.0.1", port)) == 0:
                 sys.exit(f"port {port} is already in use; stop that process or pass --port")
-        cmd = [exe, "-mod=public", f"-mod={MOD}", "-autostart-nonvisual", f"-autostart=scenarios/{scenario}",
-               f"-rl-interface=127.0.0.1:{port}"]
-        self.proc = subprocess.Popen(cmd, stdout=log.open("w"), stderr=subprocess.STDOUT)
-        for _ in range(120):
+        cmd = [exe, "-mod=public", *(f"-mod={m}" for m in mods), *([] if visual else ["-autostart-nonvisual"]),
+               f"-autostart=scenarios/{scenario}", f"-rl-interface=127.0.0.1:{port}", *extra]
+        self.proc = subprocess.Popen(cmd, stdout=log.open("w"), stderr=subprocess.STDOUT, env=env)
+        for _ in range(240):
             try:
+                # a rendered game answers while its map is still loading; wait until the simulation exists
                 self.started_ms = self.js("return Engine.QueryInterface(SYSTEM_ENTITY, IID_Timer).GetTime();")
+                if self.started_ms is None:
+                    raise OSError("simulation not loaded yet")
                 if self.proc.poll() is not None or self.started_ms > 1000:
                     self.close()
                     sys.exit("the RL interface that answered is not a freshly started game")
@@ -234,12 +237,22 @@ def write_map(mods: Path, public: Path, cells: list[dict]):
     (out / f"{LAB_MAP}.xml").write_text(xml.replace("\t</Entities>", ents + "\t</Entities>", 1), encoding="utf-8")
 
 
-def install(mods: Path):
+def game_version(public: Path) -> str:
+    """The installed game's version (mods/public/mod.json), e.g. 0.0.26 or 0.28.0."""
+    return json.loads((public / "mod.json").read_text(encoding="utf-8"))["version"]
+
+
+def install(mods: Path, public: Path):
+    """Copy um_blocks into the user mod folder, declaring the installed game version as its dependency: 0 A.D.
+    refuses to load a mod built for another version, so the test must say which one it ran against."""
     dst = mods / MOD
     for f in (HERE / MOD).rglob("*"):
         if f.is_file():
             (dst / f.relative_to(HERE / MOD)).parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(f, dst / f.relative_to(HERE / MOD))
+    meta = json.loads((dst / "mod.json").read_text())
+    meta["dependencies"] = [f"0ad={game_version(public)}"]
+    (dst / "mod.json").write_text(json.dumps(meta, indent=2) + "\n")
 
 
 # --------------------------------------------------------------------------- the test
@@ -252,21 +265,24 @@ def main():
                     help="user mod folder (macOS: ~/Library/Application Support/0ad/mods)")
     ap.add_argument("--port", type=int, default=6000)
     ap.add_argument("--log", default="blocks_lab.game.log")
+    ap.add_argument("--paths", help="also write every walk's sampled path (one point per 200 ms turn) to this JSON file")
     a = ap.parse_args()
     mods, public, log = Path(a.mods), Path(a.public), Path(a.log)
-    install(mods)
-    report, checks = {}, {}
+    install(mods, public)
+    report, checks, paths = {"game_version": game_version(public)}, {}, {}
 
     g = Game(a.exe, a.port, "arcadia", log)
     try:
         unit = spearman(g)
         start, goal, d, angle, base = lane(g, unit)
         report["baseline"] = {k: v for k, v in base.items() if k != "path"}
+        paths["baseline"] = base["path"]
 
         cells = wall_cells(start, d, angle)
         ids = [place(g, *c) for c in cells]
         g.step()
         walled = walk(g, unit, start, goal)
+        paths["wall"], paths["cells"] = walled["path"], cells
         report["wall"] = {k: v for k, v in walled.items() if k != "path"} | dict(
             blocks=len(ids), crossing_offset=crossing(walled["path"], start, d),
             samples_inside_blocks=inside_any(walled["path"], cells))
@@ -280,6 +296,7 @@ def main():
         g.step()
         after = components(g, mid)
         gap = walk(g, unit, start, goal)
+        paths["gap"], paths["broken"] = gap["path"], WALL // 2
         report["break"] = dict(block=mid, before=before, after=after,
                                **{k: v for k, v in gap.items() if k != "path"},
                                crossing_offset=crossing(gap["path"], start, d),
@@ -299,6 +316,7 @@ def main():
         unit = spearman(g)
         back = blocks(g)
         again = walk(g, unit, start, goal)
+        paths["reload"] = again["path"]
         moved = max(min(math.dist((b["x"], b["z"]), (s["x"], s["z"])) for b in back) for s in saved)
         report["reload"] = dict(fresh_game_clock_ms=g.started_ms, saved=len(saved), loaded=len(back), max_position_error=round(moved, 4),
                                 all_have_colliders=all(b["collider"] and b["visual"] for b in back),
@@ -309,6 +327,7 @@ def main():
         side = (d[1], -d[0])
         shift = lambda p: (p[0] + side[0] * 2 * SIZE, p[1] + side[1] * 2 * SIZE)
         onto = walk(g, unit, shift(start), shift(goal))
+        paths["reload_onto_block"] = onto["path"]
         off = crossing(onto["path"], shift(start), d)
         report["reload"]["lane_onto_a_kept_block"] = dict(arrived=onto["arrived"], length=onto["length"], crossing_offset=off)
         checks["reload_kept_block_still_collides"] = onto["arrived"] and off is not None and abs(off) >= SIZE / 2
@@ -318,6 +337,8 @@ def main():
     finally:
         g.close()
 
+    if a.paths:
+        Path(a.paths).write_text(json.dumps(dict(start=start, goal=goal, size=SIZE, **paths)))
     report["checks"] = checks
     report["passed"] = all(checks.values())
     report["evidence"] = "0 A.D. 0.0.26 headless via the RL interface; AI pathing, no rendering; player feel not tested"

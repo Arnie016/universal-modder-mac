@@ -16,6 +16,6 @@
     <MaxGatherers>4</MaxGatherers>
   </ResourceSupply>
   <VisualActor>
-    <Actor>props/special/eyecandy/block_granite.xml</Actor>
+    <Actor>um/block_granite.xml</Actor>
   </VisualActor>
 </Entity>

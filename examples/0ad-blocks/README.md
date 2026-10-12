@@ -7,8 +7,18 @@ building works inside the real game's simulation, not in an overlay:
 - **Removal.** Breaking a block removes its collider and its visual together. Soldiers then walk through the gap.
 - **Persistence.** Damage and placed blocks go through the game's own components. The surviving blocks are saved into a scenario map, and a freshly started game loads them with working colliders.
 
-The block reuses the stock `props/special/eyecandy/block_granite.xml` actor. Mechanically it is a gaia stone
-quarry with a 4 × 4 m footprint and 50 stone, so workers can also mine it. The mining path has not been tested yet.
+The block's look is a 4 m granite cube (`um_blocks/art/meshes/um/block_4m.dae`, generated for this mod) skinned
+with the game's stock `props/wrld_block_granite.dds` texture, so the visual matches the 4 × 4 m collider. The stock
+`block_granite` prop is only 0.8 × 0.5 m. Mechanically the block is a gaia stone quarry with 50 stone, so workers can
+also mine it. The mining path has not been tested yet.
+
+`shots.py` replays the test in the rendered game and saves real frames: the open lane, the placed wall, the detour,
+the broken block and the walk through the gap. It needs an X display; on Linux, run it under `xvfb-run`. It uses
+ImageMagick's `import` for capture, so it does not run on macOS yet. It installs a second, test-only mod
+(`um_blocks_shots`) that adds one GUI notification type so the simulation can move the camera.
+
+The installer writes the installed game's version (from `mods/public/mod.json`) into the mod's dependency, because
+0 A.D. refuses mods declared for another version.
 
 ## Result
 
@@ -26,7 +36,7 @@ when it answered.
 
 All 10 checks passed. The report is JSON, and the script exits 0 only when every check passes.
 
-**What this does not prove:** rendering (nonvisual mode, no screenshot), a human playing it, the macOS build,
+**What this does not prove:** a human playing it, the macOS build,
 0 A.D.'s own savegame format (the test reloads through a scenario map that the harness writes), and any link to
 Minecraft.
 
