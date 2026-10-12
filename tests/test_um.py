@@ -14,7 +14,7 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from um import backup, fal, publish, scan, sprite, video  # noqa: E402
+from um import backup, fal, publish, remix, scan, sprite, video  # noqa: E402
 
 
 # --------------------------------------------------------------------------- scan
@@ -486,3 +486,84 @@ def test_epic_manifests_on_mac(tmp_path, monkeypatch):
     make(man, {"x.item": json.dumps(dict(AppName="Ginger", DisplayName="Cyberpunk 2077", InstallLocation=str(game)))})
     monkeypatch.setattr(scan, "epic_manifest_dir", lambda: man)
     assert scan.epic_games() == [dict(store="epic", appid="Ginger", name="Cyberpunk 2077", path=str(game))]
+
+
+# --------------------------------------------------------------------------- remix
+
+KARTS = b"""<?xml version="1.0"?>
+<characteristics>
+    <!-- base values -->
+    <characteristic name="base">
+        <engine power="950" max-speed="25" brake-factor="11.0" />
+    </characteristic>
+    <characteristic name="heavy">
+        <engine power="1100" />
+    </characteristic>
+</characteristics>
+"""
+
+
+@pytest.fixture
+def game(tmp_path, monkeypatch):
+    monkeypatch.setenv("UM_HOME", str(tmp_path / "um"))
+    base = tmp_path / "game" / "data"
+    make(base, {"kart_characteristics.xml": KARTS, "karts/tux/kart.xml": "<kart/>", "music/a.ogg": b"OGG"})
+    remix.new("fast", str(base), None)
+    return base
+
+
+def test_remix_path_needs_exactly_one_element():
+    assert len(remix.find_elements(KARTS, "characteristic[name=base]/engine")) == 1
+    assert len(remix.find_elements(KARTS, "engine")) == 2
+    assert remix.find_elements(KARTS, "characteristic[name=light]/engine") == []
+    assert remix.parse_path("a[x=1][y=b c]/d") == [("a", {"x": "1", "y": "b c"}), ("d", {})]
+
+
+def test_remix_set_keeps_layout_and_never_writes_the_game(game):
+    before = (game / "kart_characteristics.xml").read_bytes()
+    done = remix.set_values("fast", "kart_characteristics.xml", "characteristic[name=base]/engine", ["max-speed=35"])
+    assert done == [dict(file="kart_characteristics.xml", path="characteristic[name=base]/engine",
+                         attr="max-speed", old="25", new="35")]
+    overlay = Path(remix.load("fast")["overlay"])
+    assert (overlay / "kart_characteristics.xml").read_bytes() == before.replace(b'max-speed="25"', b'max-speed="35"')
+    assert (game / "kart_characteristics.xml").read_bytes() == before
+    assert not (overlay / "kart_characteristics.xml").is_symlink()
+    assert (overlay / "karts").is_symlink() and (overlay / "music").is_symlink()
+
+
+def test_remix_copy_on_write_nested_file(game):
+    man = remix.load("fast")
+    remix.materialize(man, "karts/tux/kart.xml")
+    overlay = Path(man["overlay"])
+    assert not (overlay / "karts").is_symlink() and not (overlay / "karts/tux").is_symlink()
+    assert (overlay / "karts/tux/kart.xml").read_text() == "<kart/>"
+    with pytest.raises(SystemExit):
+        remix.materialize(man, "../escape.xml")
+
+
+def test_remix_refuses_ambiguous_or_missing(game):
+    with pytest.raises(SystemExit):
+        remix.set_values("fast", "kart_characteristics.xml", "engine", ["power=1"])
+    with pytest.raises(SystemExit):
+        remix.set_values("fast", "kart_characteristics.xml", "characteristic[name=heavy]/engine", ["max-speed=9"])
+
+
+def test_remix_reset_and_verify(game):
+    remix.set_values("fast", "kart_characteristics.xml", "characteristic[name=base]/engine", ["power=2000"])
+    v = remix.verify("fast")
+    assert v["ok"] and not v["files"][0]["overlay_matches_game"]
+    r = remix.reset("fast")
+    assert r["ok"] and r["files"][0]["overlay_matches_game"] and r["patches"] == 0
+    (game / "kart_characteristics.xml").write_bytes(b"<changed/>")
+    assert not remix.verify("fast")["ok"]
+
+
+def test_remix_env_points_stk_at_the_overlay_parent(game):
+    man = remix.load("fast") | {"game": "supertuxkart"}
+    assert remix.env_for(man)["SUPERTUXKART_DATADIR"] == str(Path(man["overlay"]).parent)
+
+
+def test_remix_reads_stk_profile_row():
+    out = "noise\nprofile:     tux   0    2  106.36  12.40  20.00 \nmore\n"
+    m = list(remix.PROFILE_ROW.finditer(out))[-1]
+    assert (m.group(1), float(m.group(4)), float(m.group(6))) == ("tux", 106.36, 20.0)
