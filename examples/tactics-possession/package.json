@@ -1,1 +1,18 @@
-{"name":"tactics-possession","private":true,"type":"module","license":"GPL-2.0-or-later","scripts":{"test":"node --import ./node-register.mjs --test tests/*.test.mjs"},"dependencies":{"@modelcontextprotocol/sdk":"1.32.1","zod":"4.3.6"}}
+{
+  "name": "tactics-possession",
+  "private": true,
+  "type": "module",
+  "license": "GPL-2.0-or-later",
+  "scripts": {
+    "test": "node --import ./node-register.mjs --test tests/*.test.mjs",
+    "native:build": "node native/build.mjs",
+    "native:verify": "node native/verify.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.0"
+  }
+}

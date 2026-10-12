@@ -36,7 +36,7 @@ Original code and donor code: GPL-2.0-or-later. Copyright 2026 Arnav and contrib
 
 ## Adapter recipe
 
-`recipe.json` records the source pin and capability boundary. An envelope contains `v`, `epoch`, `seq`, `owner`, and an upstream `command`. Reject duplicates, stale epochs, invalid positions and entity ownership violations before applying a command. Only the host applies damage. Native Mac and Minecraft adapters must implement equivalent state semantics and pass their own actual-game tests; accepting JSON alone does not prove them.
+`recipe.json` records the source pin and capability boundary. An envelope contains `v`, `epoch`, `seq`, `owner`, and an upstream `command`. Reject duplicates, stale epochs, invalid positions and entity ownership violations before applying a command. Only the host applies damage. The native Mac adapter below implements these semantics and has local runtime/window proof. Minecraft remains unimplemented; accepting JSON alone does not prove a game hook.
 
 ## A useful contribution
 
@@ -45,3 +45,13 @@ Fork/extract the source, choose one bounded change, and preserve the donor files
 No automatic token collection, paid worker service or private telemetry exists. An independent contributor reproducing and extending the game is still untested.
 
 `bridge.js` is the shared host boundary used by browser controls and MCP. `matchHost` checks declared commands, coordinate units, tick rate and state authority. A matching declaration still requires an actual gameplay verifier on that host. It cannot discover or grant game hooks.
+
+## Native Mac prototype
+
+`native/` builds an original AppKit/SceneKit window using Metal and JavaScriptCore. It executes the same pinned donor and reviewed simulation as the browser; the native scene owns no second collision or health system. Browser and native sessions are separate battles, not connected multiplayer. This is not a port of the full 0 A.D. engine or an adapter into a retail game.
+
+Requires macOS, Apple command-line development tools and Node 24+. After `npm ci --ignore-scripts`, run `npm run native:verify`. This compiles the app and runs 15 checks inside Apple JavaScriptCore: actual donor commands, movement, ownership, view identity, wall obstruction, melee damage/cooldown/line of sight, full combat, invalid imports and JSON persistence. The receipt prints the local app path. Double-click that app to play; it begins paused. Begin/Pause, Rally, Possess, Save and Load are visible controls. WASD/Space/Shift/drag apply in first person. R restarts.
+
+Build products go into a checkout-specific temporary directory because iCloud/File Provider metadata can prevent code signing. `REMIX_NATIVE_BUILD_DIR` optionally selects a local output folder. The binary targets macOS 14 on the build machine's architecture; only the arm64 macOS 26.6.2 local window has been exercised. Intel and older macOS gameplay remain untested. Signing is local ad-hoc only: no Developer ID, notarization or public installable native release.
+
+The visible Mac window was exercised with native input: rally moved Guardian 1 from z=22 to z=5.962; possession preserved all units and its 138 HP; holding W moved it to z=1.462; restart/load restored the exact saved world. Its recorded SceneKit backend was Metal with rendered frames. This is agent-operated local proof, not human acceptance. Native scenery is deliberately simpler than the browser and native audio is not implemented. Native MCP access is not exposed. Default saves live in the prototype's own Application Support folder; `--state-dir` can direct lab saves to an explicit isolated folder. It does not change Minecraft or browser saves.

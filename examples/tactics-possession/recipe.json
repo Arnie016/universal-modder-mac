@@ -36,7 +36,7 @@
   },
   "futureAdapters": {
     "minecraft": "NOT_IMPLEMENTED",
-    "nativeEngine": "NOT_IMPLEMENTED"
+    "nativeEngine": "LOCAL_PROTOTYPE_VERIFIED_APPKIT_SCENEKIT_JAVASCRIPTCORE"
   },
   "requires": {
     "envelopeVersion": 1,

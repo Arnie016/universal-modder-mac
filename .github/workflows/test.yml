@@ -37,6 +37,8 @@ jobs:
           npm ci --ignore-scripts --prefix examples/tactics-possession
           ./bin/um remix inspect examples/tactics-possession
           ./bin/um remix test examples/tactics-possession --trust-code
+      - name: compile and verify native remix in Apple JavaScriptCore
+        run: node examples/tactics-possession/native/verify.mjs
       - name: compile the native helper (swiftc) and run the read-only commands
         run: |
           ./bin/um mac helper

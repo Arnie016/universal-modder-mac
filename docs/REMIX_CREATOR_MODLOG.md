@@ -23,3 +23,16 @@
 - Evidence folder (local, not committed): chat outputs/remix-live-tools-2026-10-13, including live-receipt.json and two screenshots.
 - Boundaries: stdio MCP remains an isolated headless world; native/Minecraft adapters remain NOT_IMPLEMENTED. Independent contributor remains NOT_TESTED. No Worlds Garden edits or external spend.
 - Next bounded step: a contributor reproduces the package and adds one supported rule, with an independent browser verifier.
+
+## 2026-10-13 — native Mac host locally verified
+
+- Route: compile a separate original Swift/AppKit/SceneKit renderer; bundle the existing simulation and unchanged pinned 0 A.D. command donor into JavaScriptCore. One JS simulation owns movement/collision/damage/saves, native nodes only display it. No WebView, native game injection or modification of paused Minecraft worlds.
+- Decisive verifier: same envelope on the native runtime; real movement, obstruction/cooldown, view identity, terminal round and save/reload; then actual native window controls and rendered Metal scene. Source matching alone is insufficient.
+- Scope: local native prototype in examples/tactics-possession/native, disposable checkout-specific local temporary output. No signed/notarized release claim. Existing public game stays intact during proof.
+
+- Actual result: compiled the AppKit/SceneKit app and ran 15 checks in Apple JavaScriptCore. Movement, wall collision, strike damage/cooldown/occlusion, ownership, epoch, view identity, terminal combat, malformed import and persistence passed. Twenty-five Node example checks passed; native CI is separate and pending at this entry.
+- Native window proof: SceneKit reported Metal and rendered frames. Visible Rally moved guardian 1 z=22 → 5.962; possession preserved all 20 units and 138 HP at the same tick. Native W held 900ms moved it to z=1.462. R restarted; Load restored the exact saved world. Lab saves/receipts/screenshots stay outside the source package.
+- Errors: Swift rejected leading-dot number syntax and SpriteKit-style userData. Corrected numeric literals, used SceneKit node names and CGFloat vectors. Signing failed because File Provider reapplied Finder metadata; generated app moved outside synced checkout before signing. A test assumed JSON preserved Infinity; corrected it to check an actual invalid numeric string.
+- Platform boundary: local arm64 macOS 26.6.2 window exercised; target macOS 14 and build-machine architecture is not proof of older/Intel compatibility. Binary is locally ad-hoc signed, not notarized or a public native release. Native audio and native MCP not implemented. Browser/native sessions are independent; Minecraft adapter and independent contribution/human acceptance remain untested.
+- Sources: Apple SceneKit and JSContext official documentation BOUNDED_EXPERIMENT. Existing donor unchanged. Field note records the repeatable route and observed failures. $0 external spend.
+- Next: independent reproduction, native sound/feedback and battlefield framing; keep Worlds Garden paused.
