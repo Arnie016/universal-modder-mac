@@ -506,7 +506,7 @@ class Experiment:
         self.cmd = cmd
         self.id = secrets.token_hex(4)
         self.date = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
-        self.out = Path(out) if out else runs_dir() / f"{self.date}-{self.recipe['id']}-{self.id}"
+        self.out = Path(out).resolve() if out else runs_dir() / f"{self.date}-{self.recipe['id']}-{self.id}"
         self.out.mkdir(parents=True, exist_ok=True)
         self.transcript: list = []
         self.adapter: Adapter | None = None
