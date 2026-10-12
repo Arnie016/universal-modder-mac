@@ -24,6 +24,9 @@ export function applyOrder(w,e){
 export function switchView(w,id=w.possessed){if(w.status!=='playing')return false;const u=w.units.find(x=>x.id===id&&x.team===1&&x.hp>0);if(!u)return false;w.possessed=id;w.view=w.view==='overview'?'soldier':'overview';return true;}
 function move(u,dx,dz,dt,speed=4.8){const len=Math.hypot(dx,dz);if(len<.15)return;const nx=dx/len*speed*dt,nz=dz/len*speed*dt;if(!blocked(u.x+nx,u.z))u.x+=nx;if(!blocked(u.x,u.z+nz))u.z+=nz;}
 export function route(a,b){
+  // Navigation stores coordinates, never live entity references. Otherwise two
+  // units chasing each other can form a cycle and make battle saves unreadable.
+  a={x:a.x,z:a.z};b={x:b.x,z:b.z};
   if(clearSight(a,b))return [b];
   const nodes=[a,b];for(const o of obstacles)for(const sx of [-1,1])for(const sz of [-1,1]){const p={x:o.x+sx*(o.w/2+.85),z:o.z+sz*(o.d/2+.85)};if(!blocked(p.x,p.z))nodes.push(p);}
   const dist=nodes.map(()=>Infinity),prev=[],done=new Set();dist[0]=0;

@@ -4,3 +4,5 @@
 .soldier-mode .mission h1,.soldier-mode #objective{display:none}.soldier-mode .mission{top:100px}.soldier-mode #soldierHealth{margin-top:20px}.soldier-mode .stats{margin-top:15px}
 
 [hidden]{display:none!important}
+header #sound{margin-left:0}header #agent{margin-left:auto}#agent[aria-pressed=true]{border-color:#f0ca87;color:#f0ca87}.agent-access{border:1px solid #d2c29255;background:#ffffff05;border-radius:12px;padding:16px}.agent-access h3{font-size:15px;margin:0}.agent-access p{font-size:12px;margin:10px 0}#agentStatus{color:#f0ca87}#revokeAgent{background:#dba991}button:disabled{opacity:.55;cursor:default}dialog{max-height:calc(100dvh - 24px);overflow:auto}#about h2{font-size:34px}#closeAbout{background:#ffffff15;color:#fff8e6}
+@media(max-width:700px){header{gap:7px}header a{font-size:9px;letter-spacing:1px}header button{padding:9px;font-size:10px}#about h2{font-size:28px}.agent-access{padding:12px}}

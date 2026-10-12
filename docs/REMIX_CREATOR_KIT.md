@@ -43,7 +43,7 @@ The CLI does not install dependencies or open a browser for you. The server bind
 6. Regenerate the source manifest after reviewing the change. Use `tools/create-remix-manifest.py <folder> --source-license <SPDX-id>`; it hashes the source but does not certify its licence or safety.
 7. Run inspect, match and test, then play it in a real browser. Submit a small diff with exact reproduction steps and a sanitized screenshot/test receipt. No private saves, credentials, account keys or chat history.
 
-An independent contributor reproducing and extending this package remains untested. Human playtest quality is NOT_TESTED. Native and Minecraft adapters are NOT_IMPLEMENTED. The game's existing stdio MCP controls an isolated test world, not the player's open browser session; see its README.
+An independent contributor reproducing and extending this package remains untested. Human playtest quality is NOT_TESTED. Native and Minecraft adapters are NOT_IMPLEMENTED. The stdio MCP controls an isolated test world. Optional WebMCP tools now control the player's actual open battle on supported browsers; see its README.
 
 ## Licensing boundary
 
@@ -51,4 +51,10 @@ The toolkit's Python CLI is MIT, following its existing licence. `examples/tacti
 
 ## Next platform gate
 
-A second host must consume the same orders and prove real movement, obstruction, damage ownership and persistence in its actual running game. A shared JSON format alone does not establish interoperability. A live browser MCP session also needs explicit session identity and authorization before it can affect a player's battle.
+A second host must consume the same orders and prove real movement, obstruction, damage ownership and persistence in its actual running game. A shared JSON format alone does not establish interoperability. The live browser permission lease is off by default, limited to five minutes and the current battle epoch, with revocation and restart/load invalidation. It grants no native game hooks.
+
+## Live agent checkpoint — 13 October 2026
+
+Example 0.1.1 exposes inspect, owned squad orders and viewpoint switching through `document.modelContext` on a supported browser. Click Agent off → Enable for 5 minutes. It uses the same `GameBridge` as player input. This was tested in the Codex browser on a Mac: a tool-issued walk moved the visible guardian, possession selected guardian 2 with existing health, revocation rejected the old registration, and restart removed tools. Combat save/load also passed after fixing entity-reference cycles in navigation. Desktop and 390px permission screens were inspected; human quality acceptance remains NOT_TESTED. 23 game checks pass locally.
+
+API primary source (BOUNDED_EXPERIMENT): https://developer.chrome.com/docs/ai/webmcp/imperative-api (updated 21 September 2026). This is experimental browser support, not a claim of general browser or MCP-client compatibility. Expiry at five minutes is verified with a deterministic clock test; the live browser check verifies revocation and restart, not a five-minute wait.

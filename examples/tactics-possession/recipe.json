@@ -1,7 +1,7 @@
 {
   "schema": "remix-recipe/1",
   "id": "tactics-possession",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "donor": {
     "repo": "https://gitea.wildfiregames.com/0ad/0ad",
     "commit": "78ca04310ebe9c02d8db22eb6bbd79ee0f3dfac9",

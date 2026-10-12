@@ -14,6 +14,14 @@ Requires Node 24 for tests/MCP. Browser play needs WebGL, native ES modules and 
 
 Controls: click ground/enemies to command; Tab switches viewpoints; WASD moves; drag to look; Space strikes; Shift sprints; Q rallies; G holds; R restarts. Choose a numbered guardian to select them; choose them again to select the squad. Saves stay in this browser. This is single player, not online matchmaking.
 
+## Optional live browser agent
+
+On browsers exposing `document.modelContext.registerTool` (WebMCP), click **Agent off**, then **Enable for 5 minutes** after entering the valley. Three tools observe this exact open battle, order owned guardians, and switch viewpoint. They use the same bridge as player controls. Access is off by default, expires after five minutes, and can be revoked in the game. Restart, loading a save and leaving the page end it. Commands require the current battle epoch; they cannot reset, save, advance time or access accounts/files.
+
+This is browser-dependent experimental support, not universal agent compatibility. The local stdio MCP server above still has its own world. The permission lease limits trusted game tools; it does not sandbox arbitrary contributed code. Reproduce the live check by inspecting guardian positions, issuing a move, inspecting again after normal play, and revoking access.
+
+Primary API: https://developer.chrome.com/docs/ai/webmcp/imperative-api
+
 ## Actual reuse and ownership
 
 The two files in `vendor/0ad/` are unchanged upstream `EntityCollection` and utilities from Wildfire Games 0 A.D., pinned to `78ca04310ebe9c02d8db22eb6bbd79ee0f3dfac9`. Source: https://gitea.wildfiregames.com/0ad/0ad/src/commit/78ca04310ebe9c02d8db22eb6bbd79ee0f3dfac9/binaries/data/mods/public/simulation/ai/common-api/entitycollection.js
