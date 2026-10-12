@@ -12,7 +12,7 @@ export function matchHost(host){
 // permission to run arbitrary contributed code, nor proof of native game hooks.
 export class GameBridge{
  constructor(binding){this.binding=binding;this.match=matchHost(binding.descriptor);if(!this.match.declaredCompatible)throw Error(this.match.missing.join('; '));for(const fn of ['observe','submit','advance','snapshot'])if(typeof binding[fn]!=='function')throw Error(`Missing adapter callback: ${fn}`);}
- order(owner,ids,action,payload){if(ids.length>8)throw Error('Selection budget exceeded');const receipts=donorOrder(this.binding.observe(),owner,ids,action,payload);for(const receipt of receipts)if(!this.binding.submit(receipt))throw Error('Host rejected command');return receipts;}
+ order(owner,ids,action,payload){if(ids.length>8)throw Error('Selection budget exceeded');const observed=this.binding.observe();const receipts=donorOrder({...observed,sequence:observed.sequence},owner,ids,action,payload);for(const receipt of receipts)if(!this.binding.submit(receipt))throw Error('Host rejected command');return receipts;}
  step(ticks){if(!Number.isInteger(ticks)||ticks<0||ticks>600)throw Error('Tick budget exceeded');this.binding.advance(ticks);return this.binding.snapshot();}
  observe(){return this.binding.snapshot();}
 }

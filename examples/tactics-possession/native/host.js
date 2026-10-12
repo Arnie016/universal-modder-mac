@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // The native renderer calls this trusted runtime. It owns no second physics world.
+import {applyFormation,parseFormation} from '../formation.js';
 import {GameBridge,browserHost} from '../bridge.js';
 import {createWorld,applyOrder,step,snapshot,restore} from '../simulation.js';
 globalThis.structuredClone ??= value => JSON.parse(JSON.stringify(value));
@@ -11,6 +12,7 @@ const parse=json=>{if(typeof json!=='string'||json.length>524288)throw Error('In
 const api={
   capabilities:()=>JSON.stringify({host:nativeHost,match:bridge.match,donor:bridge.match.donor}),
   observe:output,
+  formation:json=>{applyFormation(world,parseFormation(json));return output();},
   order:json=>{
     const a=parse(json);if(a.epoch!==world.epoch||world.status!=='playing')throw Error('Stale or completed battle');
     const receipts=bridge.order(1,a.ids,a.action,a.payload);

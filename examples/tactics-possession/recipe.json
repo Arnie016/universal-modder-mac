@@ -1,7 +1,7 @@
 {
   "schema": "remix-recipe/1",
   "id": "tactics-possession",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "donor": {
     "repo": "https://gitea.wildfiregames.com/0ad/0ad",
     "commit": "78ca04310ebe9c02d8db22eb6bbd79ee0f3dfac9",
@@ -43,5 +43,15 @@
     "coordinateSystem": "right-handed-y-up",
     "distanceUnit": "metre",
     "tickHz": 60
+  },
+  "mechanicExtensions": {
+    "formations": {
+      "schema": "remix-formation/1",
+      "interpreter": "formation.js",
+      "arbitraryCode": false,
+      "maxBytes": 4096,
+      "slots": 8,
+      "hostAuthority": "movement/collision/damage/persistence"
+    }
   }
 }

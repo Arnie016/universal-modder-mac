@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+import {formations,validateFormation} from './formation.js';
 // Original host simulation. 0 A.D. supplies squad commands, not host physics or AI.
 export const obstacles=[{x:-10,z:1,w:4,d:13},{x:10,z:1,w:4,d:13},{x:-6,z:13,w:4,d:3},{x:6,z:13,w:4,d:3}];
 export function createWorld(epoch=1){
   let id=0;const units=[];
   for(let i=0;i<8;i++)units.push({id:++id,team:1,x:(i%4-1.5)*2.1,z:22+Math.floor(i/4)*2,hp:180,maxHp:180,cooldown:0,stance:'defensive',order:null});
   for(let i=0;i<12;i++)units.push({id:++id,team:2,x:(i%6-2.5)*3,z:-22-Math.floor(i/6)*3,hp:150,maxHp:150,activeAt:Math.floor(i/4)*25,cooldown:0,stance:'aggressive',order:{type:'attack-walk',x:0,z:25}});
-  return {epoch,sequence:0,applied:[],tick:0,time:0,units,view:'overview',possessed:1,status:'playing',core:300,kills:0,events:[],lastStrike:0};
+  return {formation:validateFormation(formations[0]),epoch,sequence:0,applied:[],tick:0,time:0,units,view:'overview',possessed:1,status:'playing',core:300,kills:0,events:[],lastStrike:0};
 }
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 export function blocked(x,z,r=.52){return Math.abs(x)>40||Math.abs(z)>38||obstacles.some(o=>Math.abs(x-o.x)<o.w/2+r&&Math.abs(z-o.z)<o.d/2+r);}
@@ -17,8 +18,10 @@ export function applyOrder(w,e){
   if(['walk','attack-walk'].includes(c.type)&&(!Number.isFinite(c.x)||!Number.isFinite(c.z)||blocked(c.x,c.z)))return false;
   if(c.type==='attack'&&!w.units.some(u=>u.id===c.target&&u.team!==e.owner&&u.hp>0))return false;
   if(c.type==='stance'&&!['aggressive','defensive','passive','standground'].includes(c.name))return false;
-  w.applied.push(e.seq);
-  targets.forEach((u,i)=>{if(c.type==='stance')u.stance=c.name;else u.order={...c,x:c.x+(i%4-1.5)*1.15,z:c.z+Math.floor(i/4)*1.15};});
+  const slots=validateFormation(w.formation||formations[0]).slots;
+  if(['walk','attack-walk'].includes(c.type)&&targets.some((_,i)=>blocked(c.x+slots[i].x,c.z+slots[i].z)))return false;
+  w.applied.push(e.seq);w.sequence=Math.max(w.sequence,e.seq);
+  targets.forEach((u,i)=>{if(c.type==='stance')u.stance=c.name;else u.order={...c,x:c.x+slots[i].x,z:c.z+slots[i].z};});
   return true;
 }
 export function switchView(w,id=w.possessed){if(w.status!=='playing')return false;const u=w.units.find(x=>x.id===id&&x.team===1&&x.hp>0);if(!u)return false;w.possessed=id;w.view=w.view==='overview'?'soldier':'overview';return true;}
@@ -66,4 +69,4 @@ export function step(w,dt=1/60,input={}){
   else if(w.core<=0||!w.units.some(u=>u.team===1&&u.hp>0)||w.time>=180)w.status='lost';
 }
 export function snapshot(w){return structuredClone(w);}
-export function restore(data){if(data?.units?.length!==20||!['playing','won','lost'].includes(data.status)||data.units.some(u=>!Number.isFinite(u.x)||!Number.isFinite(u.z)||!Number.isFinite(u.hp)))throw Error('Invalid save');return structuredClone(data);}
+export function restore(data){if(data?.units?.length!==20||!['playing','won','lost'].includes(data.status)||data.units.some(u=>!Number.isFinite(u.x)||!Number.isFinite(u.z)||!Number.isFinite(u.hp)))throw Error('Invalid save');const copy=structuredClone(data);copy.formation=validateFormation(copy.formation||formations[0]);return copy;}

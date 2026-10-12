@@ -10,5 +10,5 @@ const result=spawnSync(artifact.binary,['--verify'],{encoding:'utf8',timeout:600
 if(result.stderr)process.stderr.write(result.stderr);
 if(result.status!==0)throw Error(result.stdout||'Native runtime verifier failed');
 const receipt=JSON.parse(result.stdout);
-if(receipt.passed<15||receipt.runtime!=='JavaScriptCore')throw Error('Incomplete native proof');
+if(receipt.passed<18||receipt.runtime!=='JavaScriptCore')throw Error('Incomplete native proof');
 console.log(JSON.stringify({artifact,receipt},null,2));

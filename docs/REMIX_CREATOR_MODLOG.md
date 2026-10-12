@@ -36,3 +36,13 @@
 - Platform boundary: local arm64 macOS 26.6.2 window exercised; target macOS 14 and build-machine architecture is not proof of older/Intel compatibility. Binary is locally ad-hoc signed, not notarized or a public native release. Native audio and native MCP not implemented. Browser/native sessions are independent; Minecraft adapter and independent contribution/human acceptance remain untested.
 - Sources: Apple SceneKit and JSContext official documentation BOUNDED_EXPERIMENT. Existing donor unchanged. Field note records the repeatable route and observed failures. $0 external spend.
 - Next: independent reproduction, native sound/feedback and battlefield framing; keep Worlds Garden paused.
+
+## 2026-10-13 — contributable formation layouts verified locally
+
+- Bounded route: validated declarative formation files change the original host's assignment of destinations after real upstream walk/attack-walk commands. No arbitrary source execution, global script injection, borrowed art or new game installation.
+- Shared ownership: browser and JavaScriptCore native host use one formation interpreter; collision and combat remain owned by the existing simulation. A layout describes eight bounded metre offsets, not new engine compatibility.
+- Proof required: malformed/overlapping layouts rejected atomically, blocked destinations rejected before order mutation, real donor command moves to different layout targets, persistence/native runtime retains formation, browser import/export/share link changes actual play. Public source ZIP must include the current native and creator code. Human/independent creator remains a separate gate.
+
+- Result: 30/30 Node game checks and 18/18 Apple JavaScriptCore checks pass. Browser imported Creator pincer, rejected a script-bearing file while retaining the valid candidate, applied the layout, and issued a real upstream walk command with eight corresponding destinations. A fresh shared-link tab selected the same layout. Escape restored the intro. The existing battle completed with 12 raiders defeated in 66 seconds; this is agent-operated proof, not human acceptance.
+- Interface review: enlarged the preview to distinguish all eight positions. Desktop and 390px viewport were inspected; modal scroll keeps secondary share controls accessible. Human comprehension NOT_TESTED. Native picker remains unimplemented. Proof files stay in chat outputs/remix-formation-workshop-2026-10-13.
+- Website source update is pending at this entry. Existing donor files unchanged; no Minecraft edits or external spend. Independent contributor and human playtest remain required.

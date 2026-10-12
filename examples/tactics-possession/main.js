@@ -1,11 +1,34 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 import * as THREE from 'three';
+import {formations,parseFormation,applyFormation,formationLink,formationFromLink} from './formation.js';
 import {DONOR} from './adapter.js';
-import {GameBridge,browserHost} from './bridge.js';
+import {GameBridge,browserHost} from './bridge.js?v=0.1.2';
 import {LiveBattleTools} from './live-tools.js?v=0.1.1';
-import {createWorld,applyOrder,switchView,step,snapshot,restore,obstacles} from './simulation.js?v=0.1.1';
+import {createWorld,applyOrder,switchView,step,snapshot,restore,obstacles} from './simulation.js?v=0.1.2';
 const $=id=>document.getElementById(id);let world=createWorld(),running=false,selected=[],yaw=Math.PI,drag=false,lastX=0,audio=null,muted=true;
 const bridge=new GameBridge({descriptor:browserHost,observe:()=>world,submit:e=>applyOrder(world,e),advance:n=>{for(let i=0;i<n;i++)step(world);},snapshot:()=>snapshot(world)});
+try{const linked=formationFromLink(location.hash);if(linked)applyFormation(world,linked);}catch(e){$('notice').textContent=e.message;}
+let candidate=world.formation;
+function showFormation(){
+ $('formationName').textContent=candidate.name;
+ $('formationShare').value=formationLink(location.href,candidate);
+ const preview=$('formationPreview');preview.replaceChildren();
+ const xs=candidate.slots.map(p=>p.x),zs=candidate.slots.map(p=>p.z);
+ const centreX=(Math.min(...xs)+Math.max(...xs))/2,centreZ=(Math.min(...zs)+Math.max(...zs))/2;
+ const scale=Math.min(190/Math.max(1,Math.max(...xs)-Math.min(...xs)),110/Math.max(1,Math.max(...zs)-Math.min(...zs))); 
+ for(const [i,p] of candidate.slots.entries()){const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');dot.setAttribute('cx',String(120+(p.x-centreX)*scale));dot.setAttribute('cy',String(90+(p.z-centreZ)*scale));dot.setAttribute('r','7');dot.setAttribute('class',i===0?'lead-dot':'squad-dot');preview.append(dot);}
+ $('formationChoices').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.pack===candidate.id)));
+}
+function openWorkshop(){candidate=world.formation;if($('intro').open)$('intro').close();$('formationStatus').textContent='';showFormation();$('formationWorkshop').showModal();}
+function closeWorkshop(){$('formationWorkshop').close();if(!running)$('intro').showModal();}
+$('formationWorkshop').addEventListener('cancel',e=>{e.preventDefault();closeWorkshop();});
+for(const pack of formations){const b=document.createElement('button');b.textContent=pack.name;b.dataset.pack=pack.id;b.onclick=()=>{candidate=pack;$('formationStatus').textContent='';showFormation();};$('formationChoices').append(b);}
+$('workshop').onclick=openWorkshop;$('introWorkshop').onclick=openWorkshop;$('closeFormation').onclick=closeWorkshop;
+$('formationFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>4096)throw Error('Choose a formation file smaller than 4 KB.');candidate=parseFormation(await file.text());showFormation();$('formationStatus').textContent='Layout checked. Ready to use.';}catch(error){$('formationStatus').textContent=error.message;}finally{e.target.value='';}};
+$('applyFormation').onclick=()=>{try{applyFormation(world,candidate);$('workshop').textContent='Formation: '+world.formation.name;notice(world.formation.name+' will guide your next move.');closeWorkshop();}catch(e){$('formationStatus').textContent=e.message;}};
+$('exportFormation').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(candidate,null,2)+'\n'],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=candidate.id+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+$('copyFormation').onclick=async()=>{try{await navigator.clipboard.writeText($('formationShare').value);$('formationStatus').textContent='Play link copied.';}catch{$('formationStatus').textContent='Select the link above and copy it.';}};
+$('workshop').textContent='Formation: '+world.formation.name;
 const keys=new Set(),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let agentConnecting=false,agentError="";
 const liveTools=new LiveBattleTools({context:document.modelContext,bridge,ready:()=>running&&world.status==='playing',possess:(view,id)=>{world.possessed=id;world.view=view;selected=[id];keys.clear();},notice,changed:reason=>{refreshAgent();if(reason==='expired')notice('Agent access expired. Your battle continues.');}});
@@ -43,10 +66,10 @@ function notice(s){$('notice').textContent=s;}
 function tone(freq=440,duration=.1){if(muted)return;audio??=new AudioContext();audio.resume();const o=audio.createOscillator(),g=audio.createGain();o.type='triangle';o.frequency.setValueAtTime(freq,audio.currentTime);o.frequency.exponentialRampToValueAtTime(freq*.5,audio.currentTime+duration);g.gain.setValueAtTime(.06,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(g).connect(audio.destination);o.start();o.stop(audio.currentTime+duration);}
 function issue(action,payload){if(!running||world.status!=='playing')return;const ids=selected.length?selected:world.units.filter(u=>u.team===1&&u.hp>0).map(u=>u.id);try{bridge.order(1,ids,action,payload);tone(660,.08);notice(action==='attack'?'Squad attacking your target.':action==='stance'?'Guardians holding position.':'Squad moving to your command.');}catch(e){notice(e.message);}}
 function toggle(){if(!running)return;if(switchView(world,selected[0]||world.possessed)){tone(330,.18);notice(world.view==='soldier'?'You are now in the battle. WASD moves, Space strikes.':'Command view. Click the ground or a raider.');}}
-function restart(){liveTools.revoke('restart');world=createWorld(world.epoch+1);selected=[];running=true;keys.clear();$('result').close();notice('A new encounter. Hold the sanctuary. Agent access is off.');tone(523,.2);}
+function restart(){liveTools.revoke('restart');const formation=world.formation;world=createWorld(world.epoch+1);applyFormation(world,formation);selected=[];running=true;keys.clear();$('result').close();notice('A new encounter. Hold the sanctuary. Agent access is off.');tone(523,.2);}
 $('possess').onclick=toggle;$('rally').onclick=()=>issue('attackMove',{x:0,z:6});$('guard').onclick=()=>issue('stance',{name:'standground'});$('restart').onclick=restart;$('again').onclick=restart;
 $('save').onclick=()=>{try{localStorage.setItem('tactics-possession-v1',JSON.stringify(snapshot(world)));notice('Battle saved on this browser.');}catch{notice('Save unavailable. Your browser storage may be full.');}};
-$('load').onclick=()=>{try{const saved=localStorage.getItem('tactics-possession-v1');if(!saved)throw Error('No saved battle yet.');const restored=restore(JSON.parse(saved));liveTools.revoke('load');world=restored;selected=[];running=true;$('result').close();notice('Saved battle restored. Agent access is off.');}catch(e){notice(e.message);}};
+$('load').onclick=()=>{try{const saved=localStorage.getItem('tactics-possession-v1');if(!saved)throw Error('No saved battle yet.');const restored=restore(JSON.parse(saved));liveTools.revoke('load');world=restored;$('workshop').textContent='Formation: '+world.formation.name;selected=[];running=true;$('result').close();notice('Saved battle restored. Agent access is off.');}catch(e){notice(e.message);}};
 $('sound').onclick=()=>{muted=!muted;$('sound').textContent=muted?'Sound off':'Sound on';$('sound').setAttribute('aria-pressed',String(!muted));tone(660,.1);};$('details').onclick=()=>{refreshAgent();$('about').showModal();};$('closeAbout').onclick=()=>{$('about').close();};
 $('intro').showModal();$('begin').onclick=()=>{$('intro').close();running=true;tone(440,.25);};
 for(let id=1;id<=8;id++){const b=document.createElement('button');b.textContent=String(id);b.title=`Select guardian ${id}`;b.onclick=()=>{const u=world.units.find(x=>x.id===id);if(u.hp<=0)return;selected=selected.length===1&&selected[0]===id?[]:[id];world.possessed=id;notice(selected.length?`Guardian ${id} selected. Tab to possess.`:'Whole squad selected.');};$('roster').append(b);}

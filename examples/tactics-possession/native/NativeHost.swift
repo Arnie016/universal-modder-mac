@@ -23,7 +23,7 @@ final class BattleRuntime {
         if let error=failure { throw HostFailure.message(error) }
     }
     func call(_ name:String,_ args:[String:Any]?=nil) throws -> String {
-        let allowed=["capabilities","observe","order","submit","tick","advance","viewpoint","reset","save","load"]
+        let allowed=["capabilities","observe","order","submit","tick","advance","viewpoint","reset","save","load","formation"]
         guard allowed.contains(name) else { throw HostFailure.message("Unknown native capability.") }
         let input = try args.map { String(data:try JSONSerialization.data(withJSONObject:$0),encoding:.utf8)! }
         return try callJSON(name,input)
@@ -263,6 +263,17 @@ enum NativeVerifier {
         var badWorld=bad["world"] as! [String:Any];badWorld["kills"] = -1;bad["world"]=badWorld
         let badJSON=String(data:try JSONSerialization.data(withJSONObject:bad),encoding:.utf8)!
         do{_=try runtime.callJSON("load",badJSON);throw HostFailure.message("Invalid save accepted")}catch let e as HostFailure {if e.description=="Invalid save accepted"{throw e};checks.append("malformed save rejected without evaluating imported code")}
+        _=try runtime.call("reset")
+        let formationJSON="{\"schema\":\"remix-formation/1\",\"id\":\"native-column\",\"name\":\"Native column\",\"slots\":[{\"x\":-0.65,\"z\":0},{\"x\":0.65,\"z\":0},{\"x\":-0.65,\"z\":1.5},{\"x\":0.65,\"z\":1.5},{\"x\":-0.65,\"z\":3},{\"x\":0.65,\"z\":3},{\"x\":-0.65,\"z\":4.5},{\"x\":0.65,\"z\":4.5}]}"
+        _=try runtime.callJSON("formation",formationJSON);state=try runtime.state()
+        _=try runtime.call("order",["epoch":state.epoch,"ids":[1,2,3,4,5,6,7,8],"action":"move","payload":["x":0,"z":18]])
+        let column=try runtime.call("observe")
+        try check(column.contains("native-column") && column.contains("22.5"),"native formation changes real donor destinations")
+        let columnSave=try runtime.call("save");_=try runtime.call("reset");_=try runtime.callJSON("load",columnSave)
+        try check(try runtime.call("save")==columnSave,"native creator formation persistence")
+        let beforeBadLayout=try runtime.call("save")
+        do{_=try runtime.callJSON("formation","{\"schema\":\"remix-formation/1\"}");throw HostFailure.message("Bad formation accepted")}catch let e as HostFailure {if e.description=="Bad formation accepted"{throw e}}
+        try check(try runtime.call("save")==beforeBadLayout,"native invalid layout leaves battle unchanged")
         let receiptObject:[String:Any]=["runtime":"JavaScriptCore","host":"native-valley","checks":checks,"passed":checks.count,"nativeWindow":"NOT_TESTED_BY_THIS_VERIFIER","full0ADEngine":false,"humanPlaytest":"NOT_TESTED"]
         print(String(data:try JSONSerialization.data(withJSONObject:receiptObject,options:[.prettyPrinted,.sortedKeys]),encoding:.utf8)!)
     }

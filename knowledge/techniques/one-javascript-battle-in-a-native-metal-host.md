@@ -67,3 +67,7 @@ External spend $0. Native runtime/window proof is local; source build and proof 
 ## Open questions
 
 Add native audio and improve the battlefield framing, then have an independent creator reproduce one bounded rule change. Minecraft development stays paused.
+
+## Supported formation data extension (13 October 2026)
+
+Tactics Possession adds a bounded eight-slot JSON layout with strict keys, finite offsets, spacing and size limits. Validate every assigned host destination before advancing the sequence cursor or mutating any unit. The unchanged donor emits the walk; the host assigns positions and remains the sole movement/collision/damage authority. Browser import/export/share and native interpreter persistence use the same validator. Thirty Node checks and eighteen Apple JavaScriptCore checks pass; browser import/error recovery and real order destinations were exercised. This is data extensibility, not execution sandboxing or another game's compatibility. Native UI picker and independent contribution remain untested.
