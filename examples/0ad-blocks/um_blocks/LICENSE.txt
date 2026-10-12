@@ -1,0 +1,22 @@
+um_blocks, a mod for 0 A.D.
+Copyright (C) 2026 universal-modder contributors
+
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any
+later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+details.
+
+You should have received a copy of the GNU General Public License along with this program (GPL-2.0.txt in this
+folder); if not, see <https://www.gnu.org/licenses/>.
+
+SPDX-License-Identifier: GPL-2.0-or-later
+
+This covers everything in this folder: the simulation component, GUI scripts, templates, actors, the block mesh and
+the HUD pixel art. The scripts outside this folder (hero_lab.py, blocks_lab.py, make_hud_art.py) and the rest of
+the universal-modder repository are MIT.
+
+0 A.D. is (C) Wildfire Games: its code is GPL-2.0-or-later and its art is CC BY-SA 3.0. This mod ships none of
+it. It refers to stock templates, actors and textures by path, and they load from the player's own install.

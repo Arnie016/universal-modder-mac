@@ -8,11 +8,32 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: uv run --with pytest pytest -q tests
-      - run: ./bin/um --help && for g in scan fal sprite render3d video win mac backup publish kb; do ./bin/um $g --help > /dev/null; done
+      - run: ./bin/um --help && for g in scan fal sprite render3d video win mac backup publish kb scout remix lab; do ./bin/um $g --help > /dev/null; done
+      - name: recipes (format, hashes, WIT) and the acceptance suite on the adapter template
+        run: |
+          ./bin/um lab validate recipes/0ad-hero-squad
+          ./bin/um lab validate recipes/templates/demo-counter
+          ./bin/um lab accept recipes/templates/demo-counter --allow-recipe-cmd
       - name: knowledge base
         run: ./bin/um kb check --index
       - name: nothing that shouldn't ship
         run: ./bin/um publish check .
+
+  game:
+    # The recipe's acceptance suite in the real game on a clean machine: 0 A.D. 0.0.26 from Ubuntu 24.04, headless.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends 0ad
+      - name: 0ad-hero-squad acceptance in 0 A.D.
+        run: ./bin/um lab accept recipes/0ad-hero-squad --out lab-run
+      - name: the sanitized receipt and the end of the game log
+        if: always()
+        run: |
+          ./bin/um lab receipt lab-run || true
+          tail -n 30 lab-run/game.log || true
 
   macos:
     runs-on: macos-latest

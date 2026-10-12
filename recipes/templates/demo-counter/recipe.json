@@ -1,0 +1,173 @@
+{
+  "format": "umx-recipe/0.1",
+  "id": "demo-counter",
+  "version": "0.1.0",
+  "title": "Demo counter (adapter template)",
+  "summary": "One number that a demo-add command increases. It shows the recipe format and tests the adapter template; it is not a game.",
+  "status": {
+    "evidence": "locally tested",
+    "game_integration": "none: this is a template"
+  },
+  "root": "..",
+  "engine": {
+    "game": "demo counter",
+    "adapter_cmd": [
+      "python3",
+      "{dir}/../adapter_template.py"
+    ],
+    "versions": [
+      "0.1.0"
+    ],
+    "player": 1,
+    "interfaces": [
+      {
+        "name": "umx-adapter/0.1 over stdio",
+        "use": "the whole game lives in the adapter process",
+        "evidence": "recipes/templates/adapter_template.py"
+      }
+    ]
+  },
+  "profile": {
+    "kind": "reference",
+    "sandbox": "none: a Python process with your permissions; read it before running it",
+    "why": "The smallest complete adapter, so the protocol and the acceptance suite run without a game."
+  },
+  "provenance": {
+    "upstream": [],
+    "reused": [],
+    "new": [
+      "adapter_template.py: the umx-adapter/0.1 loop, the envelope rules and a one-number world"
+    ]
+  },
+  "licenses": {
+    "recipe": "MIT",
+    "code": "MIT",
+    "assets": "none"
+  },
+  "artifacts": [
+    {
+      "path": "adapter_template.py",
+      "sha256": "0a02034fe35d35026c25b8ba383c12104902bd9265ec3b3f894682f3fa4cdec4",
+      "role": "adapter and world"
+    }
+  ],
+  "units": {
+    "length": "none",
+    "angle": "none",
+    "time": "milliseconds of game time",
+    "counter": "whole number"
+  },
+  "timing": {
+    "turn_ms": 100,
+    "clock": "the lab: the counter world only advances on step",
+    "commands_apply": "in the first turn of the next step"
+  },
+  "envelope": {
+    "fields": {
+      "src": "sender name",
+      "seq": "1, 2, 3... per src",
+      "session": "from observe",
+      "epoch": "from observe"
+    },
+    "refusals": {
+      "stale-session": "another session",
+      "stale-epoch": "sent before the last load",
+      "bad-envelope": "missing src or seq < 1",
+      "duplicate": "seq already seen from this src"
+    },
+    "resume": "after a disconnect, observe and continue from lastSeq[src] + 1; resending the last command is harmless"
+  },
+  "commands": {
+    "demo-add": {
+      "type": "object",
+      "required": [
+        "type",
+        "amount"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "demo-add"
+        },
+        "amount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        }
+      }
+    }
+  },
+  "observation": {
+    "type": "object",
+    "required": [
+      "session",
+      "epoch",
+      "timeMs",
+      "counter",
+      "lastSeq",
+      "acks",
+      "ackCount"
+    ],
+    "properties": {
+      "session": {
+        "type": "integer"
+      },
+      "epoch": {
+        "type": "integer"
+      },
+      "timeMs": {
+        "type": "integer"
+      },
+      "counter": {
+        "type": "integer"
+      },
+      "lastSeq": {
+        "type": "object"
+      },
+      "acks": {
+        "type": "array"
+      },
+      "ackCount": {
+        "type": "integer"
+      }
+    }
+  },
+  "ownership": {
+    "movement": "none",
+    "collision": "none",
+    "health": "none",
+    "inventory": "the adapter's World owns the counter",
+    "persistence": "none: a restart starts from 0 with a new session"
+  },
+  "owned_entities": [],
+  "effects": [
+    {
+      "command": "demo-add",
+      "does": "counter += amount (1-10)"
+    }
+  ],
+  "limits": {
+    "max_turns_per_step": 50,
+    "max_total_turns": 1000,
+    "max_commands_per_send": 16,
+    "max_wall_seconds": 60
+  },
+  "fixtures": [
+    {
+      "name": "count-to-five",
+      "file": "fixtures/count-to-five.jsonl",
+      "about": "two adds, one refusal, time passing"
+    }
+  ],
+  "acceptance": {
+    "probe": {
+      "type": "demo-add",
+      "amount": 1
+    },
+    "fixtures": [
+      "count-to-five"
+    ]
+  },
+  "playbook": "PLAYBOOK.md",
+  "evidence": []
+}

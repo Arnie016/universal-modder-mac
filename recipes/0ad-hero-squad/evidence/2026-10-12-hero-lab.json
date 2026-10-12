@@ -1,0 +1,136 @@
+{
+ "format": "umx-evidence/0.1",
+ "kind": "visual play with real X11 key and mouse input",
+ "date": "2026-10-12",
+ "recipe": {
+  "id": "0ad-hero-squad",
+  "version": "0.1.2",
+  "digest": "8ab33e3079a30894863fca9ace815314fda4545a3cd29051acdcac9f70d598f3"
+ },
+ "harness": "examples/0ad-blocks/hero_lab.py (xdotool on Xvfb 1280x720; the RL interface steps the clock at 5 Hz)",
+ "game": {
+  "name": "0 A.D.",
+  "version": "0.0.26"
+ },
+ "platform": "linux-x86_64",
+ "passed": 21,
+ "total": 21,
+ "checks": {
+  "hero_spawned_from_button_click": true,
+  "squad_recruited": true,
+  "hud_reports_full_hearts": true,
+  "w_walks_the_hero": true,
+  "d_turns_the_hero": true,
+  "click_places_block": true,
+  "block_costs_10_stone": true,
+  "xp_rises_on_place": true,
+  "click_breaks_block": true,
+  "break_refunds_stone": true,
+  "slot6_puts_squad_in_box_formation": true,
+  "slot5_horn_orders_follow": true,
+  "squad_keeps_up_with_hero": true,
+  "slot3_sword_damages_enemy": true,
+  "quickload_keeps_saved_block": true,
+  "quickload_drops_unsaved_block": true,
+  "quickload_starts_new_epoch": true,
+  "hero_and_squad_survive_quickload": true,
+  "script_places_with_same_command": true,
+  "duplicate_seq_ignored": true,
+  "stale_epoch_refused": true
+ },
+ "measured": {
+  "squad_size": 4,
+  "walked_m": 22.2,
+  "turn_rad": {
+   "before": 2.356,
+   "after": 3.343
+  },
+  "place": {
+   "n": 13,
+   "timeMs": 11400,
+   "player": 1,
+   "type": "um-place",
+   "src": "gui-93787339",
+   "seq": 13,
+   "ok": true,
+   "code": "placed",
+   "text": "Placed a granite block (-10 stone)",
+   "entity": 4777,
+   "x": 634,
+   "z": 590
+  },
+  "break_ack": {
+   "n": 14,
+   "timeMs": 14200,
+   "player": 1,
+   "type": "um-break",
+   "src": "gui-93787339",
+   "seq": 14,
+   "ok": true,
+   "code": "broken",
+   "text": "Broke the block (+10 stone)",
+   "entity": 4777,
+   "x": 634,
+   "z": 590
+  },
+  "formation_ack": {
+   "n": 15,
+   "timeMs": 16200,
+   "player": 1,
+   "type": "um-squad",
+   "src": "gui-93787339",
+   "seq": 15,
+   "ok": true,
+   "code": "formation",
+   "text": "Squad formation: box",
+   "formation": "box"
+  },
+  "follow": {
+   "hero_moved_m": 18.6,
+   "squad_median_distance_m": 11.3
+  },
+  "attack": {
+   "fixture_enemy": 4779,
+   "hp_before": 100,
+   "hp_after": 87.00922
+  },
+  "persistence": {
+   "saved_block": 4781,
+   "unsaved_block": 4783,
+   "saved_blocks": 1,
+   "blocks_after_extra_place": 2,
+   "blocks_after_quickload": 1,
+   "epoch_before": 0,
+   "epoch_after": 1,
+   "attempts": [
+    [
+     "placed"
+    ],
+    [
+     "blocked",
+     "placed"
+    ]
+   ]
+  }
+ },
+ "variation": "Input is real time while the clock runs at 5 Hz, so distances and damage vary between runs. Earlier runs on the same day measured 22.2 m walked, 1.2 rad turned and 23.6 HP of sword damage (0.1.0) and 20.4 m, 1.04 rad and 13.0 HP (0.1.1); this run measured 22.2 m, 0.99 rad and 13.0 HP.",
+ "harness_note": "Since 0.1.2 the harness waits for InitGame before it steps the clock. A 0.1.2 run without that wait passed 21/21 but logged two StatisticsTracker errors from a step sent during the loading screen.",
+ "fixtures_disclosed": "The enemy for the sword check is spawned 14 m ahead by the harness; the last checks send commands from a script, not the keyboard.",
+ "log_errors": [],
+ "umx_lines": 35,
+ "screenshots": {
+  "note": "kept out of the repository (they show CC-BY-SA 0 A.D. art); sha256 of each file",
+  "files": {
+   "0_rts_view.png": "9bc0a1b2a6a25e482a23ad655c7f950913e7efcf9a233f6d83de3b859432e310",
+   "1_first_person.png": "937b199358e3688ef4163723660ed0b33f9061f827285d81c42f446b7306bf61",
+   "2_walked_and_turned.png": "f930e84f23a28efc117a00c17ee3ff66694f7e0485619243ba0b4f0879a45768",
+   "3_block_placed.png": "18ee8da9b296ecb219d3c84873824b7cc81681db45fddffb08701c461e2defa5",
+   "4_block_broken.png": "6ef55defa29b17bf76d49af486ea0c935d315ee6ccff018e25c296f6cabcb3ce",
+   "5_box_formation_third_person.png": "f5648dd7d3756e80a66b2f0becd6d90b2250c684fccc3b770bde947903984a78",
+   "6_attack.png": "c3d4491387b55eeb6cabbe4e68046b580ba8d9478336d9b4d9a205badf020ead",
+   "7_tactical_map.png": "f2a2d76922b0400e8656715f340721aa979b47bb5224355536335627580c5557",
+   "8_after_quickload.png": "5a1e4a6bddea39111557b8f23937289f97f98257ed08aa009a16c2dfd5d20d98",
+   "9_final.png": "195a5b524405bf33c0fd8df68ef0714b82290b0915f1ae501df2892e8a43d4cf"
+  }
+ }
+}

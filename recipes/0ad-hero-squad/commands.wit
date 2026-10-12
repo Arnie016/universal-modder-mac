@@ -1,0 +1,109 @@
+/// Typed commands and observations of the 0ad-hero-squad recipe.
+///
+/// On the wire the lab sends JSON: a command's case name is its "type" ("um-place") and the record fields
+/// are its keys. JSON keys are camelCase (timeMs) where WIT is kebab-case (time-ms), and enum values keep
+/// the game's own spelling (line_closed) where WIT has line-closed. `um lab validate` checks that this file
+/// and the recipe's JSON Schemas name the same commands and fields.
+package umx:hero-squad@0.1.0;
+
+interface types {
+    /// Who sent a command, so the game can refuse it or ignore a resend. The game refuses another session
+    /// ("stale-session") or a command sent before the last load ("stale-epoch"), and ignores a seq it has
+    /// already seen from that src ("duplicate").
+    record envelope {
+        src: string,
+        seq: u64,
+        session: u32,
+        epoch: u32,
+    }
+
+    /// An entity id in the running game.
+    type entity-id = u32;
+
+    enum block-kind { granite, limestone, sandstone }
+
+    enum formation { null, box, line-closed, column-closed }
+
+    enum squad-op { recruit, follow, rally, attack, formation, hold }
+
+    /// Metres on the map; angles in radians, 0 faces +z and turning right increases it.
+    record spawn-args { x: option<f64>, z: option<f64>, angle: option<f64> }
+    record possess-args { entity: entity-id }
+    record face-args { angle: f64 }
+    record move-args { x: f64, z: f64, stop: option<bool> }
+    record place-args { x: f64, z: f64, block: option<block-kind> }
+    record break-args { entity: option<entity-id>, x: option<f64>, z: option<f64> }
+    record squad-args {
+        op: squad-op,
+        radius: option<f64>,
+        x: option<f64>,
+        z: option<f64>,
+        target: option<entity-id>,
+        formation: option<formation>,
+    }
+
+    variant command {
+        um-spawn(spawn-args),
+        um-possess(possess-args),
+        um-face(face-args),
+        um-move(move-args),
+        um-place(place-args),
+        um-break(break-args),
+        um-squad(squad-args),
+    }
+
+    /// The game's answer to one command. n counts every ack this game has made.
+    record ack {
+        n: u64,
+        time-ms: u64,
+        player: u32,
+        %type: string,
+        src: string,
+        seq: u64,
+        ok: bool,
+        code: string,
+        text: string,
+        gap: option<bool>,
+        entity: option<entity-id>,
+    }
+
+    record avatar { id: entity-id, x: f64, z: f64, angle: f64, hp: f64, max-hp: f64 }
+    record squad-member { id: entity-id, x: f64, z: f64, hp: f64, in-formation: bool }
+    record resources { food: f64, wood: f64, stone: f64, metal: f64 }
+    record hud {
+        half-hearts: u32,
+        half-food: u32,
+        xp: u32,
+        level: u32,
+        xp-in-level: u32,
+        blocks-in-hand: u32,
+    }
+    record counters { placed: u32, broken: u32 }
+
+    /// Everything a sender needs: session and epoch to address the game, lastSeq to resume after a
+    /// disconnect, the HUD numbers, and the newest acks.
+    record observation {
+        v: u32,
+        session: u32,
+        epoch: u32,
+        time-ms: u64,
+        player: u32,
+        avatar: option<avatar>,
+        squad: list<squad-member>,
+        formation: formation,
+        resources: resources,
+        hud: hud,
+        counters: counters,
+        last-seq: list<tuple<string, u64>>,
+        acks: list<ack>,
+        ack-count: u64,
+    }
+}
+
+/// The restricted-WebAssembly profile: an engine-free rule that reads an observation and proposes commands.
+/// It imports nothing (no WASI: no files, clock, network or randomness), so the host decides when it runs and
+/// how much fuel it gets, and the game still applies every command through the same envelope checks.
+world squad-rule {
+    use types.{observation, command};
+    export decide: func(state: observation) -> list<command>;
+}

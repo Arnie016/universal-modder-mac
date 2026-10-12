@@ -2,3 +2,7 @@
 [mcp_servers.fal]
 url = "https://mcp.fal.ai/mcp"
 bearer_token_env_var = "FAL_KEY"
+
+[mcp_servers.mashup-scout]
+command = "bin/um"
+args = ["scout", "mcp"]

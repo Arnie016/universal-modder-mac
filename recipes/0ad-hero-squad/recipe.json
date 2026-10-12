@@ -1,0 +1,734 @@
+{
+  "format": "umx-recipe/0.1",
+  "id": "0ad-hero-squad",
+  "version": "0.1.2",
+  "title": "Hero mode: play one soldier in first person, build with blocks, command the squad",
+  "summary": "Inside the unmodified 0 A.D. engine, you play one Spartan hero in first person with a Minecraft-style HUD (hearts, food, XP, a 9-slot hotbar). You place and break 4 m stone blocks that really block movement, and order your squad to follow, rally, attack, hold or take a formation. The GUI, scripts and agents send the same typed commands.",
+  "status": {
+    "evidence": "locally tested on Linux x86_64: 0 A.D. 0.0.26 (Ubuntu 24.04 package) headless and visual, and 0.28.0 (Ubuntu archive packages) headless",
+    "macos": "not tested",
+    "multiplayer": "not supported: the epoch and session rules assume one simulation"
+  },
+  "root": "../../examples/0ad-blocks",
+  "engine": {
+    "game": "0 A.D.",
+    "adapter": "0ad",
+    "versions": [
+      "0.0.26",
+      "0.28.0"
+    ],
+    "mod": "um_blocks",
+    "scenario": "arcadia",
+    "player": 1,
+    "interfaces": [
+      {
+        "name": "RL interface (-rl-interface=127.0.0.1:PORT)",
+        "use": "the lab's clock and command path: POST /step runs one 200 ms turn with the commands posted to it; POST /evaluate reads the simulation",
+        "evidence": "0 A.D. A26 source/rlinterface/RLInterface.cpp; documented client in source/tools/rlclient/python; 0.28.0 still documents -rl-interface and -autostart-nonvisual (README.command-line.txt)"
+      },
+      {
+        "name": "g_Commands (simulation/helpers/Commands.js)",
+        "use": "um-* entries sit next to the stock commands; ProcessCommand issues stock walk, attack, guard, formation, stance and stop orders",
+        "evidence": "0 A.D. A26 binaries/data/mods/public/simulation/helpers/Commands.js"
+      },
+      {
+        "name": "Engine.PostNetworkCommand (GUI)",
+        "use": "the in-game HUD sends the same um-* commands",
+        "evidence": "um_hud.js umPost()"
+      },
+      {
+        "name": "Engine.CameraFollowFPS",
+        "use": "first-person camera on the hero",
+        "evidence": "0 A.D. A26 source/graphics/scripting/JSInterface_GameView.cpp:143"
+      },
+      {
+        "name": "system component serialization",
+        "use": "save and quickload carry UmCrossover's state",
+        "evidence": "quickload checks in evidence/2026-10-12-hero-lab.json"
+      },
+      {
+        "name": "Diplomacy (enemies of a player)",
+        "use": "the sword and squad attack pick the nearest enemy; 0.28 moved GetEnemies from Player to a Diplomacy component",
+        "evidence": "0 A.D. 0.28.0 public.zip simulation/components/Diplomacy.js:276; 0.0.26 has GetEnemies on Player"
+      }
+    ]
+  },
+  "profile": {
+    "kind": "native-worker",
+    "sandbox": "none: the game process runs with your user's permissions. The lab adds limits, not isolation: only the recipe's command types are forwarded, the RL port listens on 127.0.0.1, the process gets a CPU-time cap and a wall-clock deadline, and it is stopped by its exact PID. On Linux its mods, config, logs and cache go to a lab folder.",
+    "why": "The mechanic needs the real engine's pathfinding, collision, combat, formations and save system. A whole engine like this does not compile to WebAssembly, and re-implementing those systems would be a lookalike, not an integration. WebAssembly fits engine-free rules (see the squad-rule world in commands.wit)."
+  },
+  "provenance": {
+    "upstream": [
+      {
+        "name": "0 A.D.",
+        "by": "Wildfire Games",
+        "version": "0.0.26",
+        "url": "https://play0ad.com",
+        "source": "https://github.com/0ad/0ad/tree/A26",
+        "license": {
+          "code": "GPL-2.0-or-later",
+          "art": "CC-BY-SA-3.0"
+        },
+        "use": "run the original engine and reuse its components and commands; refer to stock templates, actors and textures by path",
+        "shipped": "nothing: no game files, art or decompiled code are in this recipe"
+      }
+    ],
+    "reused": [
+      "UnitAI and UnitMotion (walking, following, formations)",
+      "Obstruction, pathfinder and CheckFoundation (collision)",
+      "Health and Attack (damage, death)",
+      "player resources (stone, food)",
+      "stock commands: walk, attack, guard, formation, stance, stop",
+      "Engine.CameraFollowFPS",
+      "the stock Spartan hero template (units/spart/hero_leonidas) as the hero's parent",
+      "stock textures props/wrld_block_*.dds by path"
+    ],
+    "new": [
+      "UmCrossover system component: envelope checks, hero, squad, blocks, hunger, XP, Observe()",
+      "seven um-* command types",
+      "the HUD and first-person controls (um_hud.js, um_hud.xml)",
+      "original pixel-art icons (make_hud_art.py)",
+      "the 4 m block mesh",
+      "hero_lab.py and blocks_lab.py"
+    ]
+  },
+  "licenses": {
+    "recipe": "MIT",
+    "code": "The mod in um_blocks/ (simulation component, GUI scripts, templates, actors) is GPL-2.0-or-later, like 0 A.D.'s own scripts it extends; see um_blocks/LICENSE.txt. The owner chose this on 2026-10-12. The lab scripts (hero_lab.py, blocks_lab.py, make_hud_art.py) are MIT, like the rest of the repository.",
+    "assets": "The block mesh and the HUD pixel art are original and ship inside um_blocks/ under GPL-2.0-or-later; make_hud_art.py, which draws the art, is MIT. Stock 0 A.D. textures (CC-BY-SA-3.0) are referenced by path and loaded from the player's own install, never shipped."
+  },
+  "artifacts": [
+    {
+      "path": "um_blocks/art/actors/um/block_granite.xml",
+      "sha256": "4739ff3269426e4799f3899e5e4a5744df641594dd9220d8df2105d170ff8499",
+      "role": "block actor: our mesh with a stock texture referenced by path"
+    },
+    {
+      "path": "um_blocks/art/actors/um/block_limestone.xml",
+      "sha256": "f7288f2b05e4797e8bb8c07068acefaa285f28e9e45bfeeeeccfb2ebee462176",
+      "role": "block actor: our mesh with a stock texture referenced by path"
+    },
+    {
+      "path": "um_blocks/art/actors/um/block_sandstone.xml",
+      "sha256": "2641ac088ad3bf544ae47f25f862fdb2469bb44fd9437059c5fdcf3cd781738e",
+      "role": "block actor: our mesh with a stock texture referenced by path"
+    },
+    {
+      "path": "um_blocks/art/meshes/um/block_4m.dae",
+      "sha256": "bf5ad9e5668feec1c988b0890d00129722097e2c260806e09b99f082696c4ddb",
+      "role": "4 m cube mesh (made by blocks_lab)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/banner.png",
+      "sha256": "c56d82a3dfc970375981c3c5d4de89da12e6a59e8b1d32ddd4e11e9e7a17bd86",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/block_granite.png",
+      "sha256": "f960d0d3ad4dae767687434c02444ebf9825e359fd87c597a65be039b5bebd5e",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/block_limestone.png",
+      "sha256": "363207cc5a2d3bb93d7ed0853085ec67e3992391059d445268af00f47d1df9d4",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/block_sandstone.png",
+      "sha256": "df677365d4a8255c7295d62561c48437d4bcc29ab71d8cdd719e4f15c3134926",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/crosshair.png",
+      "sha256": "d89bd858260d0bfcefda744b83bbf6787525a3346a4e3aee863c4f21a69e007a",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/food_empty.png",
+      "sha256": "b482e9d886956fe9ec90cc45fb06dcbf486a20dc34ca3d2b3ae01578e3355e20",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/food_full.png",
+      "sha256": "468e8f5dd0ff8d905d106b4717fab01520a74e6cec0d027a4298f86b63196252",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/food_half.png",
+      "sha256": "f9457970a39daa3dea54095cde5786f5150df610af19375c270155f206f7fe37",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/form_box.png",
+      "sha256": "df85e77d78dcb9f1c72f22aa6fbbebd36a1159bd6fc70124a1ea9712fe3a46f3",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/form_line.png",
+      "sha256": "35120a5192e105cc3d84e292d699e455a081ac2461b42893462b9708480860e4",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/heart_empty.png",
+      "sha256": "95237aed73cf8d23f9948c71e39de44f4962bae88224688d09a2fff8538058fa",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/heart_full.png",
+      "sha256": "2d31fdbdf9ea47472451ba6008c176dd84a47913c72c40cc352494309b59cc8b",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/heart_half.png",
+      "sha256": "cc02d06f4f43cc04f5e59eaa9054cbb0abc751d42c154a9ce71eb71cf85b449a",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/horn.png",
+      "sha256": "8788e69a04f733cc374e6e62c8e10b1e8a89255f9610ffd96e799b065047c2e1",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/map.png",
+      "sha256": "94db71e85b7a3f5924d7e7a58c56ecefe280c7abb6376fb2a288748e6b057b23",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/pickaxe.png",
+      "sha256": "c612582d5e4981c91a2983353a61ebda34e20983acb6b91a3afb5ae3739db235",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/shield.png",
+      "sha256": "441a38dc8cba82eb3caa39aa5f757e339560226ce509049fa1ca8f47e938e304",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/slot.png",
+      "sha256": "eac7578e3f1584a99b529d4c7556327e40a40d62e58c2ece9ca02955bf5e0d6a",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/slot_selected.png",
+      "sha256": "89c012e6023439fdd18512fe2ee63904893f2dd2a475f7d7f98649dbf244191e",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/sword.png",
+      "sha256": "659ede4d675e7feb8e20debdc0c8767814f9be2949a0d6c7ae983397a920c53c",
+      "role": "original 16x16 pixel art scaled 4x (make_hud_art.py)"
+    },
+    {
+      "path": "um_blocks/art/textures/ui/um/textures.xml",
+      "sha256": "8af3fb36e70673e0ef1b8c4119566b1fa600df4dc06af950daea407cedede07e",
+      "role": "texture settings for the HUD icons"
+    },
+    {
+      "path": "um_blocks/gui/session/session_objects/um_hud.xml",
+      "sha256": "d0d2317189c69e7f2f7d8a0a82ba0069bd72eb832f904919ce3fcb1ffe8b928b",
+      "role": "HUD layout: hearts, food, XP bar, 9-slot hotbar, crosshair"
+    },
+    {
+      "path": "um_blocks/gui/session/um_hud.js",
+      "sha256": "45c796b7fca36256311db139b86c8ed2cc5c5e14c0a4d5164e3405a539dd9605",
+      "role": "the in-game HUD and first-person controls (same um-* commands)"
+    },
+    {
+      "path": "um_blocks/mod.json",
+      "sha256": "6a0cd4660253ae796190a0958d931c6b4c64a70081d0f6242a64557a143ead26",
+      "role": "mod manifest (the lab rewrites its dependency to the installed game version)"
+    },
+    {
+      "path": "um_blocks/LICENSE.txt",
+      "sha256": "3371960c85b28ddfe29f832e1c6ca5de3740dcd0d176140083c94c6be64b07d1",
+      "role": "licence notice: GPL-2.0-or-later for everything in the mod folder"
+    },
+    {
+      "path": "um_blocks/GPL-2.0.txt",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+      "role": "the GNU GPL version 2 text"
+    },
+    {
+      "path": "um_blocks/simulation/components/UmCrossover.js",
+      "sha256": "7accf90e0b998c7f06addbe0c269df027effeb52a49a77e6e5174badd1714daf",
+      "role": "the crossover authority: envelope checks, hero, squad, blocks, hunger, XP, Observe()"
+    },
+    {
+      "path": "um_blocks/simulation/components/interfaces/UmCrossover.js",
+      "sha256": "0c05444fe09cefd14ea84d362d00c026b8bc9aefc9a5a483851865c10a87f4dc",
+      "role": "registers IID_UmCrossover"
+    },
+    {
+      "path": "um_blocks/simulation/helpers/UmCommands.js",
+      "sha256": "6d8810b50acf57555b03b930ed20a39859702eaa9aee2dfb0ce6c362d861eb1a",
+      "role": "adds the um-* command types to the stock command table"
+    },
+    {
+      "path": "um_blocks/simulation/templates/um/block_granite.xml",
+      "sha256": "490d154a32bd023cc6c00dbfe0ad26320743db3dda3c8ece4155670f38a17b77",
+      "role": "block template (4 m obstruction, gaia-owned)"
+    },
+    {
+      "path": "um_blocks/simulation/templates/um/block_limestone.xml",
+      "sha256": "1c5f893599e9b9effddfc6c2bb4dcc74d2df1ab4eed3d7a431119cde149f14fc",
+      "role": "block template (4 m obstruction, gaia-owned)"
+    },
+    {
+      "path": "um_blocks/simulation/templates/um/block_sandstone.xml",
+      "sha256": "5febe53bb1a2f9610bb7b7f3bf072213a910c637cd2e5830c2a81515019d42de",
+      "role": "block template (4 m obstruction, gaia-owned)"
+    },
+    {
+      "path": "um_blocks/simulation/templates/um/player.xml",
+      "sha256": "6f3b57f72a7eb52813c6744826fa2de673534cbc8ca71426075062d013154cd6",
+      "role": "the hero: a stock Spartan hero template with a new name"
+    },
+    {
+      "path": "make_hud_art.py",
+      "sha256": "5df7d67b732faffe52692edb4416a1e00359e64e2b1d8551d0a7353a662cedea",
+      "role": "draws the HUD icons"
+    },
+    {
+      "path": "hero_lab.py",
+      "sha256": "3029ec500362331c114e3d02833e9a84a8c41b5be0e0871bc8c4936bbdda905e",
+      "role": "visual test: real X11 key and mouse input on the running game"
+    },
+    {
+      "path": "blocks_lab.py",
+      "sha256": "ab74db4d18f8b0d6e80b2a41eff59ffd56075eb402cd8c2408f9c7564a1d0ae9",
+      "role": "headless test: collision, removal and reload of blocks"
+    }
+  ],
+  "units": {
+    "length": "metres (0 A.D. world units); x and z are map coordinates",
+    "grid": "blocks snap to 4 m cells: centre = (floor(v / 4) + 0.5) * 4",
+    "angle": "radians; 0 faces +z and turning right increases it: forward = (sin a, cos a), right = (cos a, -sin a)",
+    "time": "milliseconds of game time (Timer.GetTime)",
+    "hp": "the game's hit points; halfHearts = ceil(hp / maxHp * 20)",
+    "resources": "the player's stockpile; one block costs 10 stone, halfFood = min(20, floor(food / 10))"
+  },
+  "timing": {
+    "turn_ms": 200,
+    "clock": "the lab: headless, the game advances only when the lab calls step (RL interface /step); in visual hero mode the RL client also owns the clock (hero_lab.py steps 5 turns per second)",
+    "commands_apply": "in the first turn of the step they were sent before; their acks are readable right after that step",
+    "hunger_ms": 10000,
+    "agent_in_frame_loop": false
+  },
+  "envelope": {
+    "fields": {
+      "src": "sender name: gui-<random>, script, mcp, fixture...",
+      "seq": "1, 2, 3... per src",
+      "session": "from observe",
+      "epoch": "from observe"
+    },
+    "refusals": {
+      "stale-session": "the command names another session (another game, or before a restart)",
+      "stale-epoch": "the command was sent before the last load",
+      "bad-envelope": "missing src, or seq is not a whole number >= 1",
+      "duplicate": "seq is not above the last one seen from this src: ignored, nothing changes"
+    },
+    "resume": "after a disconnect, observe and carry on from lastSeq[src] + 1; resending the last command is harmless",
+    "restart": "the adapter tags every new game with a fresh session number, so commands from before a restart are refused",
+    "load": "every load starts a new epoch (UmCrossover.Deserialize)"
+  },
+  "commands": {
+    "um-spawn": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "um-spawn"
+        },
+        "x": {
+          "type": "number"
+        },
+        "z": {
+          "type": "number"
+        },
+        "angle": {
+          "type": "number"
+        }
+      }
+    },
+    "um-possess": {
+      "type": "object",
+      "required": [
+        "type",
+        "entity"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "um-possess"
+        },
+        "entity": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "um-face": {
+      "type": "object",
+      "required": [
+        "type",
+        "angle"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "um-face"
+        },
+        "angle": {
+          "type": "number"
+        }
+      }
+    },
+    "um-move": {
+      "type": "object",
+      "required": [
+        "type",
+        "x",
+        "z"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "um-move"
+        },
+        "x": {
+          "type": "number"
+        },
+        "z": {
+          "type": "number"
+        },
+        "stop": {
+          "type": "boolean"
+        }
+      }
+    },
+    "um-place": {
+      "type": "object",
+      "required": [
+        "type",
+        "x",
+        "z"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "um-place"
+        },
+        "x": {
+          "type": "number"
+        },
+        "z": {
+          "type": "number"
+        },
+        "block": {
+          "enum": [
+            "granite",
+            "limestone",
+            "sandstone"
+          ]
+        }
+      }
+    },
+    "um-break": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "um-break"
+        },
+        "entity": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "x": {
+          "type": "number"
+        },
+        "z": {
+          "type": "number"
+        }
+      }
+    },
+    "um-squad": {
+      "type": "object",
+      "required": [
+        "type",
+        "op"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "um-squad"
+        },
+        "op": {
+          "enum": [
+            "recruit",
+            "follow",
+            "rally",
+            "attack",
+            "formation",
+            "hold"
+          ]
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 4,
+          "maximum": 80
+        },
+        "x": {
+          "type": "number"
+        },
+        "z": {
+          "type": "number"
+        },
+        "target": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "formation": {
+          "enum": [
+            "null",
+            "box",
+            "line_closed",
+            "column_closed"
+          ]
+        }
+      }
+    }
+  },
+  "observation": {
+    "type": "object",
+    "required": [
+      "v",
+      "session",
+      "epoch",
+      "timeMs",
+      "player",
+      "avatar",
+      "squad",
+      "formation",
+      "resources",
+      "hud",
+      "counters",
+      "lastSeq",
+      "acks",
+      "ackCount"
+    ],
+    "properties": {
+      "v": {
+        "const": 1
+      },
+      "session": {
+        "type": "integer"
+      },
+      "epoch": {
+        "type": "integer"
+      },
+      "timeMs": {
+        "type": "integer"
+      },
+      "player": {
+        "type": "integer"
+      },
+      "avatar": {
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "squad": {
+        "type": "array"
+      },
+      "formation": {
+        "type": "string"
+      },
+      "resources": {
+        "type": "object"
+      },
+      "hud": {
+        "type": "object"
+      },
+      "counters": {
+        "type": "object"
+      },
+      "lastSeq": {
+        "type": "object"
+      },
+      "acks": {
+        "type": "array"
+      },
+      "ackCount": {
+        "type": "integer"
+      }
+    }
+  },
+  "ownership": {
+    "movement": {
+      "owner": "engine",
+      "by": "UnitMotion, UnitAI",
+      "recipe_does": "issues stock walk orders (um-move, um-squad rally) and TurnTo (um-face)"
+    },
+    "collision": {
+      "owner": "engine",
+      "by": "Obstruction, pathfinder, CheckFoundation",
+      "recipe_does": "refuses a cell with a unit or block in it, and keeps a block only if CheckFoundation succeeds"
+    },
+    "health": {
+      "owner": "engine",
+      "by": "Health, Attack",
+      "recipe_does": "hunger: Health.Reduce(5) every 10 s when there is no food"
+    },
+    "inventory": {
+      "owner": "engine",
+      "by": "player resources",
+      "recipe_does": "TrySubtractResources(10 stone) to place; AddResources to break or refund"
+    },
+    "persistence": {
+      "owner": "engine",
+      "by": "the simulation serializer (save, quicksave, quickload)",
+      "recipe_does": "UmCrossover.Serialize/Deserialize; Deserialize starts a new epoch"
+    },
+    "crossover_state": {
+      "owner": "recipe",
+      "by": "UmCrossover",
+      "holds": "hero, squad, formation, xp, counters, session, epoch, lastSeq, acks"
+    }
+  },
+  "owned_entities": [
+    {
+      "template": "um/player",
+      "owner": "the commanding player",
+      "max": "1 per player",
+      "created_by": "um-spawn",
+      "destroyed_by": "combat or starvation (engine)"
+    },
+    {
+      "template": "um/block_granite, um/block_limestone, um/block_sandstone",
+      "owner": "gaia (player 0)",
+      "max": "stone / 10",
+      "created_by": "um-place",
+      "destroyed_by": "um-break"
+    },
+    {
+      "template": "the player's existing soldiers",
+      "owner": "the player",
+      "max": 12,
+      "note": "ordered, never created or deleted"
+    }
+  ],
+  "effects": [
+    {
+      "command": "um-spawn",
+      "does": "creates the hero next to your first soldier, recruits up to 12 soldiers within 40 m who then guard (follow) the hero, and starts hunger"
+    },
+    {
+      "command": "um-possess",
+      "does": "makes one of your own units the hero"
+    },
+    {
+      "command": "um-face",
+      "does": "turns the hero (TurnTo)"
+    },
+    {
+      "command": "um-move",
+      "does": "walk order for the hero, or stop"
+    },
+    {
+      "command": "um-place",
+      "does": "-10 stone, creates a 4 m block in the cell within 16 m, +1 XP; refused when the cell is occupied, too far, unaffordable, or blocked (refund)"
+    },
+    {
+      "command": "um-break",
+      "does": "+10 stone, destroys the block within 16 m, +2 XP"
+    },
+    {
+      "command": "um-squad",
+      "does": "stock orders for the squad: recruit, follow (guard), rally (walk in formation), attack (nearest enemy within 40 m or a target), formation, hold (stop + stand ground)"
+    },
+    {
+      "command": "(timer)",
+      "does": "every 10 s the hero eats 1 food; with none it loses 5 hp"
+    }
+  ],
+  "limits": {
+    "max_turns_per_step": 50,
+    "max_total_turns": 6000,
+    "max_commands_per_send": 16,
+    "max_wall_seconds": 900,
+    "game": {
+      "reach_m": 16,
+      "squad_max": 12,
+      "squad_radius_m": 40,
+      "senders_remembered": 32,
+      "acks_kept": 32,
+      "block_cost_stone": 10
+    },
+    "process": {
+      "cpu_seconds": 1800,
+      "rl_interface": "127.0.0.1 only"
+    },
+    "enforced_by": {
+      "lab": "max_turns_per_step, max_total_turns, max_commands_per_send, max_wall_seconds, command types and fields",
+      "game": "everything under game",
+      "adapter": "everything under process, and command types again"
+    }
+  },
+  "fixtures": [
+    {
+      "name": "hero-blocks-squad",
+      "file": "fixtures/hero-blocks-squad.jsonl",
+      "about": "spawn, walk, place, refuse a second block in the same cell, break, squad orders, hunger"
+    }
+  ],
+  "acceptance": {
+    "probe": {
+      "type": "um-face",
+      "angle": 0
+    },
+    "fixtures": [
+      "hero-blocks-squad"
+    ]
+  },
+  "playbook": "PLAYBOOK.md",
+  "wit": "commands.wit",
+  "evidence": [
+    {
+      "date": "2026-10-12",
+      "kind": "headless acceptance in the real engine (um lab accept, Linux x86_64, 0 A.D. 0.0.26 from Ubuntu 24.04)",
+      "result": "14/14 checks, replay identical",
+      "file": "evidence/2026-10-12-accept.json",
+      "sha256": "2405d049afdb47bd35948a88d82eccc8fa326c9482dac4caf6199f7660ce9efc"
+    },
+    {
+      "date": "2026-10-12",
+      "kind": "headless acceptance in the real engine (um lab accept, Linux x86_64, 0 A.D. 0.28.0 from the Ubuntu archive; on Ubuntu 24.04 it ran under its own glibc 2.43 loader, with its data and libraries mounted over the standard paths in a private mount namespace)",
+      "result": "14/14 checks, replay identical",
+      "file": "evidence/2026-10-12-accept-0.28.json",
+      "sha256": "f122cfa00a44b1af34cc4ccfa483ce291af9cc67c680abe9ad5d3fbc701f13b1"
+    },
+    {
+      "date": "2026-10-12",
+      "kind": "visual play with real key and mouse input (hero_lab.py, Xvfb, Linux x86_64, 0 A.D. 0.0.26)",
+      "result": "21/21 checks, no log errors",
+      "file": "evidence/2026-10-12-hero-lab.json",
+      "sha256": "7ce4371545674e8f16116d059b65d216af5c5f3c60103023af7335fbc8177d88"
+    },
+    {
+      "date": "2026-10-12",
+      "kind": "MCP client session (official Python SDK mcp 2.3.0, stdio, 0 A.D. 0.0.26)",
+      "result": "negotiated 2026-07-28 (server/discover) and 2025-11-25 (initialize); game paused between calls; out-of-recipe command, wrong field type and 500-turn step refused",
+      "file": "evidence/2026-10-12-mcp-client.json",
+      "sha256": "72af0866f50091e19a2e5a1cef96154866184720a8e8635ff8e6b6d959a9b82f"
+    }
+  ]
+}

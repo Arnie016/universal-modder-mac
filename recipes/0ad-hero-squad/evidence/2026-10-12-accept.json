@@ -1,0 +1,55 @@
+{
+ "format": "umx-receipt/0.1",
+ "kind": "acceptance",
+ "date": "2026-10-12",
+ "machine": "4e5d10c0d0ddc4fb",
+ "recipe": {
+  "id": "0ad-hero-squad",
+  "version": "0.1.2",
+  "digest": "8ab33e3079a30894863fca9ace815314fda4545a3cd29051acdcac9f70d598f3",
+  "artifacts_match": true
+ },
+ "adapter": {
+  "name": "0ad",
+  "protocol": "umx-adapter/0.1"
+ },
+ "game": {
+  "name": "0 A.D.",
+  "version": "0.0.26"
+ },
+ "platform": "linux-x86_64",
+ "lab": "universal-modder 0.4.0",
+ "checks": {
+  "observe_names_session_and_epoch": true,
+  "observe_has_no_side_effects": true,
+  "step_advances_exactly_n_turns": true,
+  "first_command_is_admitted": true,
+  "resend_is_ignored_as_duplicate": true,
+  "skipped_seq_is_flagged_as_gap": true,
+  "other_session_is_refused": true,
+  "other_epoch_is_refused": true,
+  "bad_envelope_is_refused": true,
+  "resume_after_disconnect": true,
+  "restart_gets_a_new_session": true,
+  "command_from_before_restart_is_refused": true,
+  "fixture:hero-blocks-squad": true,
+  "replay_is_identical:hero-blocks-squad": true
+ },
+ "passed": 14,
+ "total": 14,
+ "all_passed": true,
+ "totals": {
+  "turns": 288,
+  "commands": 35,
+  "wall_seconds": 16.1
+ },
+ "transcript_sha256": "9ac31f4411c38b8d12b3fdd261670acb94890037fa27363e3a4a7500dd85ada2",
+ "notes": {
+  "stop": {
+   "stopped": true,
+   "exit_code": -15,
+   "cpu_seconds": 5.5,
+   "peak_rss_mb": 181
+  }
+ }
+}

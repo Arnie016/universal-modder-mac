@@ -6,6 +6,13 @@
       "headers": {
         "Authorization": "Bearer ${FAL_KEY}"
       }
+    },
+    "mashup-scout": {
+      "command": "${CLAUDE_PLUGIN_ROOT:-.}/bin/um",
+      "args": [
+        "scout",
+        "mcp"
+      ]
     }
   }
 }

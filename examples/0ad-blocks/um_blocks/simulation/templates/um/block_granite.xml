@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Entity parent="template_gaia_rock">
+  <Footprint replace="">
+    <Square width="4.0" depth="4.0"/>
+    <Height>4.0</Height>
+  </Footprint>
+  <Identity>
+    <GenericName>Granite Block</GenericName>
+    <Tooltip>A placed block. Blocks movement; mine it for stone to break it.</Tooltip>
+  </Identity>
+  <Obstruction>
+    <Static width="4.0" depth="4.0"/>
+  </Obstruction>
+  <ResourceSupply>
+    <Max>50</Max>
+    <MaxGatherers>4</MaxGatherers>
+  </ResourceSupply>
+  <VisualActor>
+    <Actor>um/block_granite.xml</Actor>
+  </VisualActor>
+</Entity>

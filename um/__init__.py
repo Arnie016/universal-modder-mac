@@ -10,6 +10,9 @@ Subcommands (see `um --help`):
   backup    snapshot and restore save folders before you touch them
   publish   lint a mod folder before sharing: game files, decompiled code, secrets, credits
   kb        the knowledge base: search prior field notes, write your own, check it, open a PR
+  scout     find open-source Mac mashup/mod projects and resolve shared posts; MCP server
+  remix     change a game's rules through a reversible overlay; A/B bench
+  lab       package a mechanic as a recipe, run acceptance tests in the real game, receipts, MCP
 """
 
 __version__ = "0.4.0"

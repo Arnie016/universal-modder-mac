@@ -1,0 +1,8 @@
+{
+  "name": "um_blocks",
+  "version": "0.1.0",
+  "label": "Universal Modder blocks",
+  "url": "https://github.com/Arnie016/universal-modder-mac",
+  "description": "Minecraft-style granite blocks: they block movement, can be mined for stone, and persist in the map.",
+  "dependencies": ["0ad=0.0.26"]
+}
