@@ -16,6 +16,8 @@
  *   epoch    how many times this game was loaded, from Observe()
  * A command from another session or from before the last load is refused ("stale-session",
  * "stale-epoch"), and a repeated seq is ignored ("duplicate"), so a sender can resend safely.
+ * Every command gets an ack numbered n = 1, 2, 3... so a reader can ask for the acks after the last
+ * one it saw.
  */
 function UmCrossover() {}
 
@@ -41,6 +43,7 @@ UmCrossover.prototype.Init = function()
 	this.players = {};
 	this.lastSeq = {};
 	this.acks = [];
+	this.ackCount = 0;
 	this.hungerTimer = 0;
 };
 
@@ -52,6 +55,7 @@ UmCrossover.prototype.Serialize = function()
 		"players": this.players,
 		"lastSeq": this.lastSeq,
 		"acks": this.acks,
+		"ackCount": this.ackCount,
 		"hungerTimer": this.hungerTimer
 	};
 };
@@ -113,7 +117,9 @@ UmCrossover.prototype.Handle = function(player, cmd)
 {
 	let verdict = this.Admit(player, cmd);
 	let result = verdict.ok ? this.Apply(player, cmd) : verdict;
+	this.ackCount = (this.ackCount || 0) + 1;
 	let ack = {
+		"n": this.ackCount,
 		"timeMs": this.TimeMs(),
 		"player": player,
 		"type": cmd.type,
@@ -562,7 +568,8 @@ UmCrossover.prototype.Observe = function(player)
 		},
 		"counters": { "placed": me.placed, "broken": me.broken },
 		"lastSeq": lastSeq,
-		"acks": this.acks.filter(ack => ack.player == player).slice(-8)
+		"acks": this.acks.filter(ack => ack.player == player).slice(-8),
+		"ackCount": this.ackCount || 0
 	};
 };
 

@@ -1,0 +1,4 @@
+{"note": "add 2", "send": {"type": "demo-add", "amount": 2}, "expect": {"ack": {"ok": true, "code": "added"}, "state": {"counter": {"delta": 2}}}}
+{"note": "add 1 and let 4 more turns pass", "send": {"type": "demo-add", "amount": 1}, "turns": 5, "expect": {"ack": {"ok": true, "counter": 3}, "state": {"counter": 3, "timeMs": {"delta": 500}}}}
+{"note": "two commands in one step both apply, in order", "send": [{"type": "demo-add", "amount": 1}, {"type": "demo-add", "amount": 1}], "expect": {"ack": {"ok": true, "counter": 5}, "state": {"counter": {"delta": 2}, "ackCount": {"delta": 2}}}}
+{"note": "time passes without commands", "turns": 10, "expect": {"state": {"timeMs": {"delta": 1000}, "counter": 5}}}

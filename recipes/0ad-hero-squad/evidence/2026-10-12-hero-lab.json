@@ -1,0 +1,117 @@
+{
+  "format": "umx-evidence/0.1",
+  "kind": "visual play with real X11 key and mouse input",
+  "date": "2026-10-12",
+  "harness": "examples/0ad-blocks/hero_lab.py (xdotool on Xvfb 1280x720; the RL interface steps the clock at 5 Hz)",
+  "game": {
+    "name": "0 A.D.",
+    "version": "0.0.26"
+  },
+  "platform": "linux-x86_64",
+  "passed": 21,
+  "total": 21,
+  "checks": {
+    "hero_spawned_from_button_click": true,
+    "squad_recruited": true,
+    "hud_reports_full_hearts": true,
+    "w_walks_the_hero": true,
+    "d_turns_the_hero": true,
+    "click_places_block": true,
+    "block_costs_10_stone": true,
+    "xp_rises_on_place": true,
+    "click_breaks_block": true,
+    "break_refunds_stone": true,
+    "slot6_puts_squad_in_box_formation": true,
+    "slot5_horn_orders_follow": true,
+    "squad_keeps_up_with_hero": true,
+    "slot3_sword_damages_enemy": true,
+    "quickload_keeps_saved_block": true,
+    "quickload_drops_unsaved_block": true,
+    "quickload_starts_new_epoch": true,
+    "hero_and_squad_survive_quickload": true,
+    "script_places_with_same_command": true,
+    "duplicate_seq_ignored": true,
+    "stale_epoch_refused": true
+  },
+  "measured": {
+    "squad_size": 4,
+    "walked_m": 22.2,
+    "turn_rad": {
+      "before": 2.356,
+      "after": 3.561
+    },
+    "place": {
+      "n": 13,
+      "timeMs": 8800,
+      "player": 1,
+      "type": "um-place",
+      "src": "gui-763612713",
+      "seq": 13,
+      "ok": true,
+      "code": "placed",
+      "text": "Placed a granite block (-10 stone)",
+      "entity": 4777,
+      "x": 630,
+      "z": 590
+    },
+    "break_ack": {
+      "n": 14,
+      "timeMs": 11600,
+      "player": 1,
+      "type": "um-break",
+      "src": "gui-763612713",
+      "seq": 14,
+      "ok": true,
+      "code": "broken",
+      "text": "Broke the block (+10 stone)",
+      "entity": 4777,
+      "x": 630,
+      "z": 590
+    },
+    "follow": {
+      "hero_moved_m": 16.8,
+      "squad_median_distance_m": 11.6
+    },
+    "attack": {
+      "fixture_enemy": 4779,
+      "hp_before": 100,
+      "hp_after": 76.3804
+    },
+    "persistence": {
+      "saved_block": 4781,
+      "unsaved_block": 4783,
+      "saved_blocks": 1,
+      "blocks_after_extra_place": 2,
+      "blocks_after_quickload": 1,
+      "epoch_before": 0,
+      "epoch_after": 1,
+      "attempts": [
+        [
+          "placed"
+        ],
+        [
+          "blocked",
+          "placed"
+        ]
+      ]
+    }
+  },
+  "fixtures_disclosed": "The enemy for the sword check is spawned 14 m ahead by the harness; the last checks send commands from a script, not the keyboard.",
+  "log_errors": [],
+  "umx_lines": 35,
+  "screenshots": {
+    "note": "kept out of the repository (they show CC-BY-SA 0 A.D. art); sha256 of each file",
+    "files": {
+      "0_rts_view.png": "7729d1479c00b2065f5e602421ab5ed0b7c80466690c9031afd8d7d50547b6be",
+      "1_first_person.png": "c40c67979999d912e67932579f7fea6d86a53e7845ad8d7b41b1ee5cd853938d",
+      "2_walked_and_turned.png": "95cd6e5995d7a3135cd684ad7e54382d19385677643971d02c7c8718c0ca8aa2",
+      "3_block_placed.png": "3b864d4a035a407dc265c6b0046e5019df84658449db0a40c5d86c75b92ee454",
+      "4_block_broken.png": "aebdc4eb6730b861f3540ac569ded803c80e17d687813b7cc5bded42ab7590ea",
+      "5_box_formation_third_person.png": "050d30c8f5167aeb1822b3526f440df387f92a74d25739d71af67c52ceeb1dce",
+      "6_attack.png": "52f3edbf2cbe96d4a74de022fd62f063c0d34ca8e6e650ba3206cf7634e9ba05",
+      "7_tactical_map.png": "11695ec7b2e4540606230e000f8163dbccdee6ac8bc4efe0cb37d27305b1f6a7",
+      "8_after_quickload.png": "998e0c21eee2e5d109ac9516118d49e1793fd33a932c244dc808ca32746c1354",
+      "9_final.png": "8747069f3c1d7a5c88a8357a307309df51fcedcc1292def125643de0bcc4dd4b"
+    }
+  }
+}

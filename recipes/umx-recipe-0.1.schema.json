@@ -1,0 +1,351 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Universal Modder recipe (umx-recipe/0.1)",
+  "type": "object",
+  "required": [
+    "format",
+    "id",
+    "version",
+    "title",
+    "summary",
+    "engine",
+    "profile",
+    "provenance",
+    "licenses",
+    "artifacts",
+    "units",
+    "timing",
+    "envelope",
+    "commands",
+    "observation",
+    "ownership",
+    "owned_entities",
+    "effects",
+    "limits",
+    "fixtures",
+    "acceptance",
+    "playbook",
+    "evidence"
+  ],
+  "properties": {
+    "format": {
+      "const": "umx-recipe/0.1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "object"
+    },
+    "root": {
+      "type": "string"
+    },
+    "engine": {
+      "type": "object",
+      "required": [
+        "game",
+        "versions",
+        "interfaces"
+      ],
+      "properties": {
+        "game": {
+          "type": "string",
+          "minLength": 1
+        },
+        "adapter": {
+          "type": "string"
+        },
+        "adapter_cmd": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "versions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "mod": {
+          "type": "string"
+        },
+        "scenario": {
+          "type": "string"
+        },
+        "player": {
+          "type": "integer"
+        },
+        "interfaces": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "use",
+              "evidence"
+            ]
+          }
+        }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "required": [
+        "kind",
+        "sandbox",
+        "why"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "native-worker",
+            "wasm-restricted",
+            "reference"
+          ]
+        },
+        "sandbox": {
+          "type": "string",
+          "minLength": 1
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "upstream",
+        "reused",
+        "new"
+      ],
+      "properties": {
+        "upstream": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "version",
+              "url",
+              "license",
+              "use",
+              "shipped"
+            ]
+          }
+        },
+        "reused": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "new": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "licenses": {
+      "type": "object",
+      "required": [
+        "recipe",
+        "code",
+        "assets"
+      ]
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "sha256",
+          "role"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "role": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "units": {
+      "type": "object",
+      "required": [
+        "length",
+        "angle",
+        "time"
+      ]
+    },
+    "timing": {
+      "type": "object",
+      "required": [
+        "turn_ms",
+        "clock"
+      ],
+      "properties": {
+        "turn_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "clock": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "envelope": {
+      "type": "object",
+      "required": [
+        "fields",
+        "refusals",
+        "resume"
+      ]
+    },
+    "commands": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "type",
+          "properties"
+        ]
+      }
+    },
+    "observation": {
+      "type": "object",
+      "required": [
+        "type",
+        "required",
+        "properties"
+      ]
+    },
+    "ownership": {
+      "type": "object",
+      "required": [
+        "movement",
+        "collision",
+        "health",
+        "inventory",
+        "persistence"
+      ]
+    },
+    "owned_entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "template",
+          "owner",
+          "max"
+        ]
+      }
+    },
+    "effects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "command",
+          "does"
+        ]
+      }
+    },
+    "limits": {
+      "type": "object",
+      "required": [
+        "max_turns_per_step",
+        "max_total_turns",
+        "max_commands_per_send",
+        "max_wall_seconds"
+      ],
+      "properties": {
+        "max_turns_per_step": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_total_turns": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_commands_per_send": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_wall_seconds": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "fixtures": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "file",
+          "about"
+        ]
+      }
+    },
+    "acceptance": {
+      "type": "object",
+      "required": [
+        "probe",
+        "fixtures"
+      ]
+    },
+    "playbook": {
+      "type": "string",
+      "minLength": 1
+    },
+    "wit": {
+      "type": "string"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "date",
+          "kind",
+          "result"
+        ]
+      }
+    }
+  }
+}

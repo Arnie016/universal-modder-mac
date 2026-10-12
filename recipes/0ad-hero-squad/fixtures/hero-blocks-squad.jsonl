@@ -1,0 +1,14 @@
+{"note": "spawn the hero; nearby soldiers become its squad", "send": {"type": "um-spawn"}, "turns": 2, "expect": {"ack": {"ok": true, "code": "spawned"}, "state": {"avatar.hp": {">": 0}, "squad.length": {">=": 4}, "hud.halfHearts": 20}}}
+{"note": "walk 20 m ahead for 6 s", "send": {"type": "um-move", "at": {"ahead_m": 20}}, "turns": 30, "expect": {"ack": {"ok": true, "code": "moving"}, "state": {"travel:avatar": {">=": 8}}}}
+{"note": "stop where you are", "send": {"type": "um-move", "at": {"ahead_m": 0}, "stop": true}, "turns": 2, "expect": {"ack": {"ok": true, "code": "stopped"}}}
+{"note": "place a granite block 12 m ahead", "send": {"type": "um-place", "at": {"ahead_m": 12}, "block": "granite"}, "as": "block", "expect": {"ack": {"ok": true, "code": "placed"}, "state": {"resources.stone": {"delta": -10}, "counters.placed": {"delta": 1}, "hud.xp": {"delta": 1}, "hud.blocksInHand": {"delta": -1}}}}
+{"note": "a second block in the same cell is refused and costs nothing", "send": {"type": "um-place", "x": {"$ref": "block.x"}, "z": {"$ref": "block.z"}}, "expect": {"ack": {"ok": false, "code": "occupied"}, "state": {"resources.stone": {"delta": 0}, "counters.placed": {"delta": 0}}}}
+{"note": "placing beyond the 16 m reach is refused", "send": {"type": "um-place", "at": {"ahead_m": 30}}, "expect": {"ack": {"ok": false, "code": "too-far"}, "state": {"resources.stone": {"delta": 0}}}}
+{"note": "break the block: the stone comes back", "send": {"type": "um-break", "entity": {"$ref": "block.entity"}}, "expect": {"ack": {"ok": true, "code": "broken"}, "state": {"resources.stone": {"delta": 10}, "counters.broken": {"delta": 1}, "hud.xp": {"delta": 2}}}}
+{"note": "breaking it again finds nothing", "send": {"type": "um-break", "entity": {"$ref": "block.entity"}}, "expect": {"ack": {"ok": false, "code": "no-block"}, "state": {"resources.stone": {"delta": 0}}}}
+{"note": "box formation", "send": {"type": "um-squad", "op": "formation", "formation": "box"}, "turns": 5, "expect": {"ack": {"ok": true, "code": "formation"}, "state": {"formation": "box", "squad.0.inFormation": true}}}
+{"note": "rally the squad 20 m ahead", "send": {"type": "um-squad", "op": "rally", "at": {"ahead_m": 20}}, "turns": 40, "expect": {"ack": {"ok": true, "code": "rallying"}, "state": {"travel:squad.0": {">=": 5}}}}
+{"note": "follow the hero again", "send": {"type": "um-squad", "op": "follow"}, "expect": {"ack": {"ok": true, "code": "following"}}}
+{"note": "no enemy within 40 m at the start of Arcadia", "send": {"type": "um-squad", "op": "attack"}, "expect": {"ack": {"ok": false, "code": "no-target"}}}
+{"note": "hold this ground", "send": {"type": "um-squad", "op": "hold"}, "expect": {"ack": {"ok": true, "code": "holding"}}}
+{"note": "10 s later the hero has eaten 1 food from the stockpile", "turns": 50, "expect": {"state": {"resources.food": {"delta": -1}, "avatar.hp": {">": 0}}}}

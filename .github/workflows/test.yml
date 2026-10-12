@@ -8,7 +8,12 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: uv run --with pytest pytest -q tests
-      - run: ./bin/um --help && for g in scan fal sprite render3d video win mac backup publish kb scout remix; do ./bin/um $g --help > /dev/null; done
+      - run: ./bin/um --help && for g in scan fal sprite render3d video win mac backup publish kb scout remix lab; do ./bin/um $g --help > /dev/null; done
+      - name: recipes (format, hashes, WIT) and the acceptance suite on the adapter template
+        run: |
+          ./bin/um lab validate recipes/0ad-hero-squad
+          ./bin/um lab validate recipes/templates/demo-counter
+          ./bin/um lab accept recipes/templates/demo-counter --allow-recipe-cmd
       - name: knowledge base
         run: ./bin/um kb check --index
       - name: nothing that shouldn't ship

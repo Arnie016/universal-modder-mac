@@ -177,6 +177,7 @@ players, and an honest status and verification.
 | `um publish check` | Blocks shipping game files, decompiled code and leaked keys |
 | `um kb` | The knowledge base: `search`, `show`, `new`, `check`, `index`, `sync`, `pr` |
 | `um scout` | Scout open-source Mac mashup/mod projects: `search` (GitHub, Hacker News, Reddit), `repo` (Mac build evidence, hooks, licence, disposition), `post` (an X/Twitter link via public oEmbed), `installed`, a findings ledger, and `mcp`: the same tools as a stdio MCP server (`mashup-scout` in `.mcp.json`). Read-only; results are source claims until run |
+| `um lab` | Package a gameplay mechanic as a recipe (`recipes/`, format `umx-recipe/0.1`: provenance, licences, file hashes, typed commands, WIT, ownership, limits, replay fixtures) and test it in the real game through an adapter: `validate`, `hash`, `accept` (envelope rules, restart, fixtures, replay), `run`, `receipt` (sanitized, shareable), `metrics`, and `mcp` for agents. Built-in adapter: 0 A.D. (headless, RL interface) |
 | `um remix` | Change a game's rules without touching the game: an overlay of its data folder (symlinks, copy-on-write for patched files), exact one-element XML attribute patches, `bench` (SuperTuxKart: headless AI races, base vs remix), `run`, `reset`, `verify` (the game's files still hash as recorded) |
 
 Two no-build Windows tools ship inside the package (`um/ps1/`): WinDrive input and ProcLoopback game-only
