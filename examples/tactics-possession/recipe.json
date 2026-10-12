@@ -1,0 +1,47 @@
+{
+  "schema": "remix-recipe/1",
+  "id": "tactics-possession",
+  "version": "0.1.0",
+  "donor": {
+    "repo": "https://gitea.wildfiregames.com/0ad/0ad",
+    "commit": "78ca04310ebe9c02d8db22eb6bbd79ee0f3dfac9",
+    "component": "simulation/ai/common-api/entitycollection.js",
+    "license": "GPL-2.0-or-later",
+    "sha256": "615cdb8774b22df3265d3ec504e03f836a7d5091b73d8d137ca3127eb0cc81cc"
+  },
+  "host": {
+    "id": "browser-valley",
+    "tickHz": 60,
+    "owns": [
+      "movement",
+      "collision",
+      "damage",
+      "persistence"
+    ]
+  },
+  "capabilities": [
+    "walk",
+    "attack-walk",
+    "attack",
+    "stance"
+  ],
+  "views": [
+    "overview",
+    "soldier"
+  ],
+  "limits": {
+    "maxUnits": 20,
+    "maxSelected": 8,
+    "maxMcpTicks": 600
+  },
+  "futureAdapters": {
+    "minecraft": "NOT_IMPLEMENTED",
+    "nativeEngine": "NOT_IMPLEMENTED"
+  },
+  "requires": {
+    "envelopeVersion": 1,
+    "coordinateSystem": "right-handed-y-up",
+    "distanceUnit": "metre",
+    "tickHz": 60
+  }
+}

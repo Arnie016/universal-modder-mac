@@ -232,3 +232,13 @@ Full reasoning: [`skills/mod-any-game/references/safety.md`](skills/mod-any-game
   explained them in public.
 
 MIT licensed. Fonts: Space Grotesk and JetBrains Mono (SIL OFL).
+# Playable remix creator kit
+
+The local `um remix` commands inspect a source package, compare declared host capabilities, run reviewed acceptance tests and serve a browser game. Start with [Tactics Possession and the creator guide](docs/REMIX_CREATOR_KIT.md). It uses real 0 A.D. squad command code inside an original browser encounter. The example is GPL-2.0-or-later; the toolkit CLI remains MIT.
+
+```sh
+bin/um remix inspect examples/tactics-possession
+bin/um remix serve examples/tactics-possession --trust-code
+```
+
+This is a browser prototype, not an automatic game port. Hashes and capability matches do not prove safety or gameplay. Native/Minecraft adapters and independent contributor reproduction remain untested.

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {createHash} from 'node:crypto';
+test('runtime uses the unchanged pinned upstream component',async()=>{const bytes=await readFile(new URL('../vendor/0ad/entitycollection.js',import.meta.url));assert.equal(createHash('sha256').update(bytes).digest('hex'),'615cdb8774b22df3265d3ec504e03f836a7d5091b73d8d137ca3127eb0cc81cc');const license=await readFile(new URL('../vendor/0ad/LICENSE.md',import.meta.url),'utf8');assert.match(license,/GPL version 2/);});
