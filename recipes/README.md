@@ -6,7 +6,7 @@ same operations to agents over MCP.
 
 | Recipe | What it is | Evidence |
 | --- | --- | --- |
-| [`0ad-hero-squad`](0ad-hero-squad/) | You play one hero in first person inside the original 0 A.D. engine. It has a Minecraft-style HUD, stone blocks that really block movement, and a squad you command from a hotbar. | Linux, 0 A.D. 0.0.26: 14/14 headless acceptance, 21/21 visual play with real input, and an MCP client session in both protocol eras. |
+| [`0ad-hero-squad`](0ad-hero-squad/) | You play one hero in first person inside the original 0 A.D. engine. It has a Minecraft-style HUD, stone blocks that really block movement, and a squad you command from a hotbar. | Linux, 0 A.D. 0.0.26 and 0.28.0: 14/14 headless acceptance on each. On 0.0.26 also 21/21 visual play with real input, and an MCP client session in both protocol eras. |
 | [`templates/demo-counter`](templates/demo-counter/) | The adapter template ([`adapter_template.py`](templates/adapter_template.py)) with a one-number "game". It is not a game integration. | 14/14 acceptance; also run in CI. |
 
 ```text

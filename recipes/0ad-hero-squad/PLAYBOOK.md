@@ -5,7 +5,8 @@ blocks that really block movement, and a squad you command from a hotbar. This p
 
 ## What you need
 
-- 0 A.D. **0.0.26**, installed the normal way (Linux: `apt install 0ad`). macOS has not been tested yet.
+- 0 A.D. **0.0.26** or **0.28.0**, installed the normal way (Ubuntu 24.04: `apt install 0ad` gives 0.0.26). macOS
+  has not been tested yet.
 - Python 3.10+ and this repository. Run as a normal user: 0 A.D. refuses to run as root.
 - Nothing is bought, downloaded or generated, and the lab never touches your saves.
 
@@ -93,7 +94,7 @@ completed remixes, independent reproductions and repeat usage from those receipt
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
-| `mod-missing` | The installed game is not 0.0.26. | The lab rewrites the mod's dependency to the installed version. If it still fails, the scripts need porting (0.28 is untested). |
+| `mod-missing` | The installed game is neither 0.0.26 nor 0.28.0. | The lab rewrites the mod's dependency to the installed version. If it still fails, the scripts need porting: read `game.log` for the first `JavaScript error`. |
 | `start-failed` | The game exited while starting. | Read `game.log` in the run folder. A common cause is running as root. |
 | `occupied` or `blocked` on place | A unit, a block or terrain is in that 4 m cell. | Pick another cell. The fixture uses a cell that is free on Arcadia. |
 | `stale-session` | The command belongs to a game from before a restart. | Observe again and use the new session. |
@@ -101,8 +102,9 @@ completed remixes, independent reproductions and repeat usage from those receipt
 
 ## Proof limits
 
-- Tested on Linux x86_64 (Xvfb) with 0 A.D. 0.0.26 on 2026-10-12. Not yet tested on macOS, on 0.28, by hand
-  without the RL clock, or in multiplayer.
+- Tested on Linux x86_64 on 2026-10-12: 0 A.D. 0.0.26 headless, visually (Xvfb) and over MCP, and 0.28.0 headless
+  only. The 0.28.0 run used the Ubuntu archive's build on Ubuntu 24.04 under its own newer glibc, not a stock
+  install. Not yet tested on macOS, by hand without the RL clock, or in multiplayer.
 - Session and epoch rules assume one simulation.
 - Headless runs check commands, state and replay, but not the picture. The HUD and the camera were checked from
   screenshots of the visual run.

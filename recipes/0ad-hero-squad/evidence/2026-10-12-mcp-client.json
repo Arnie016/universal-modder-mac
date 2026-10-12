@@ -1,68 +1,73 @@
 {
-  "format": "umx-evidence/0.1",
-  "kind": "MCP session with the official Python SDK client over stdio",
-  "date": "2026-10-12",
-  "client": "mcp 2.3.0",
-  "server": "um lab mcp (umx-lab)",
-  "platform": "linux-x86_64",
-  "game": {
-    "name": "0 A.D.",
-    "version": "0.0.26"
+ "format": "umx-evidence/0.1",
+ "kind": "MCP session with the official Python SDK client over stdio",
+ "date": "2026-10-12",
+ "recipe": {
+  "id": "0ad-hero-squad",
+  "version": "0.1.1",
+  "digest": "ecff7ade99eea85161a552e0b057f662a09cac1c8c55f0f02c34ace661fca29b"
+ },
+ "client": "mcp 2.3.0",
+ "server": "um lab mcp (umx-lab)",
+ "platform": "linux-x86_64",
+ "game": {
+  "name": "0 A.D.",
+  "version": "0.0.26"
+ },
+ "modern": {
+  "protocol": "2026-07-28",
+  "negotiated_by": "server/discover",
+  "tools": [
+   "lab_capabilities",
+   "lab_validate",
+   "lab_start",
+   "lab_send",
+   "lab_step",
+   "lab_observe",
+   "lab_replay",
+   "lab_export",
+   "lab_stop"
+  ],
+  "spawn_acks": [
+   [
+    "spawned",
+    "You are the hero. 4 soldiers follow you"
+   ]
+  ],
+  "place_acks": [
+   [
+    "placed",
+    "Placed a sandstone block (-10 stone)",
+    4777
+   ]
+  ],
+  "paused_between_calls": {
+   "before_ms": 600,
+   "after_2s_wall_ms": 600,
+   "unchanged": true
   },
-  "modern": {
-    "protocol": "2026-07-28",
-    "negotiated_by": "server/discover",
-    "tools": [
-      "lab_capabilities",
-      "lab_validate",
-      "lab_start",
-      "lab_send",
-      "lab_step",
-      "lab_observe",
-      "lab_replay",
-      "lab_export",
-      "lab_stop"
-    ],
-    "spawn_acks": [
-      [
-        "spawned",
-        "You are the hero. 4 soldiers follow you"
-      ]
-    ],
-    "place_acks": [
-      [
-        "placed",
-        "Placed a sandstone block (-10 stone)",
-        4777
-      ]
-    ],
-    "paused_between_calls": {
-      "before_ms": 600,
-      "after_2s_wall_ms": 600,
-      "unchanged": true
-    },
-    "refused": {
-      "stock_walk_command": true,
-      "wrong_field_type": true,
-      "step_over_limit": true
-    },
-    "replay": {
-      "ok": true,
-      "lines": 14,
-      "digest": "ec0d75649eb2c590"
-    },
-    "receipt": {
-      "passed": 1,
-      "total": 1,
-      "kind": "mcp"
-    },
-    "stopped": true
+  "refused": {
+   "stock_walk_command": true,
+   "wrong_field_type": true,
+   "step_over_limit": true
   },
-  "legacy": {
-    "protocol": "2025-11-25",
-    "server": "umx-lab",
-    "tool_count": 9,
-    "validate_demo_ok": true,
-    "negotiated_by": "initialize"
-  }
+  "replay": {
+   "ok": true,
+   "lines": 14,
+   "digest": "ec0d75649eb2c590"
+  },
+  "receipt": {
+   "passed": 1,
+   "total": 1,
+   "kind": "mcp"
+  },
+  "stopped": true
+ },
+ "legacy": {
+  "protocol": "2025-11-25",
+  "server": "umx-lab",
+  "tool_count": 9,
+  "validate_demo_ok": true,
+  "negotiated_by": "initialize"
+ }
 }

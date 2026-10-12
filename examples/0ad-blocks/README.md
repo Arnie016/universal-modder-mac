@@ -56,16 +56,18 @@ namespace, which is never written to the player's `user.cfg`.
 ### Result
 
 `hero_lab.py` on 2026-10-12, 0 A.D. 0.0.26, Linux, Xvfb with software rendering, real xdotool input: **21 of 21
-checks passed** (`hero_report.json`). Among them: the button click spawns the hero and a 4-soldier squad; a click
-places a block (−10 stone, +1 XP) and the pickaxe breaks it (+10 stone); W walks 22 m and D turns 1.2 rad; slot 6
-puts all 4 soldiers in a box formation; with the horn they follow at a median 11.6 m; the sword takes an enemy
-spearman from 100 to 76 HP; after Shift+F5 and Shift+F8 the saved block is back, the unsaved one is gone, the epoch
-went from 0 to 1, and the hero and squad are intact; a script's `um-place` works through the same handler, its
-repeated `seq` is ignored, and a command with the old epoch is refused.
+checks passed** in two runs (`hero_report.json`). Among them: the button click spawns the hero and a 4-soldier
+squad; a click places a block (−10 stone, +1 XP) and the pickaxe breaks it (+10 stone); W walks 20–22 m and D turns
+1.0–1.2 rad; slot 6 puts all 4 soldiers in a box formation; with the horn they follow at a median 11.6–11.8 m; the
+sword takes an enemy spearman from 100 HP down by 13–24 HP; after Shift+F5 and Shift+F8 the saved block is back, the
+unsaved one is gone, the epoch went from 0 to 1, and the hero and squad are intact; a script's `um-place` works
+through the same handler, its repeated `seq` is ignored, and a command with the old epoch is refused. The ranges are
+the two runs: input is real time while the clock runs at 5 Hz, so distances and damage vary.
 
 The mechanic is also packaged as a recipe, [`recipes/0ad-hero-squad`](../../recipes/0ad-hero-squad/): `um lab accept
-recipes/0ad-hero-squad` runs the same commands headless in the real engine (14/14 on 2026-10-12, including the
-envelope rules, a restart and an identical replay), and `um lab mcp` gives them to an agent.
+recipes/0ad-hero-squad` runs the same commands headless in the real engine (14/14 on 2026-10-12 with 0 A.D. 0.0.26
+and with 0.28.0, including the envelope rules, a restart and an identical replay), and `um lab mcp` gives them to an
+agent. 0.28 moved a player's enemies from the Player component to a Diplomacy component; `UmCrossover` handles both.
 
 Fixtures, stated in the report: the enemy spearman is spawned by the test 14 m in front of the hero, and two
 envelope checks come from the script. **Not shown:** a human playtest (feel, readability, camera height), the

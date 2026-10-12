@@ -405,7 +405,10 @@ UmCrossover.prototype.Recruit = function(player, radius)
 
 UmCrossover.prototype.NearestEnemy = function(player, hero)
 {
-	let enemies = QueryPlayerIDInterface(player).GetEnemies().filter(p => p != 0);
+	// 0.28 keeps diplomacy in its own Diplomacy component; 0.0.26 keeps it in Player.
+	let cmpDiplomacy = typeof IID_Diplomacy == "undefined" ? QueryPlayerIDInterface(player) :
+		QueryPlayerIDInterface(player, IID_Diplomacy);
+	let enemies = cmpDiplomacy.GetEnemies().filter(p => p != 0);
 	let near = Engine.QueryInterface(SYSTEM_ENTITY, IID_RangeManager).ExecuteQuery(
 		hero.id, 0, UM_SQUAD_RADIUS, enemies, IID_Health, false);
 	let best = 0;

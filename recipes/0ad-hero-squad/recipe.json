@@ -1,11 +1,11 @@
 {
   "format": "umx-recipe/0.1",
   "id": "0ad-hero-squad",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "title": "Hero mode: play one soldier in first person, build with blocks, command the squad",
   "summary": "Inside the unmodified 0 A.D. engine, you play one Spartan hero in first person with a Minecraft-style HUD (hearts, food, XP, a 9-slot hotbar). You place and break 4 m stone blocks that really block movement, and order your squad to follow, rally, attack, hold or take a formation. The GUI, scripts and agents send the same typed commands.",
   "status": {
-    "evidence": "locally tested on Linux (Xvfb) with 0 A.D. 0.0.26",
+    "evidence": "locally tested on Linux x86_64: 0 A.D. 0.0.26 (Ubuntu 24.04 package) headless and visual, and 0.28.0 (Ubuntu archive packages) headless",
     "macos": "not tested",
     "multiplayer": "not supported: the epoch and session rules assume one simulation"
   },
@@ -14,7 +14,8 @@
     "game": "0 A.D.",
     "adapter": "0ad",
     "versions": [
-      "0.0.26"
+      "0.0.26",
+      "0.28.0"
     ],
     "mod": "um_blocks",
     "scenario": "arcadia",
@@ -23,7 +24,7 @@
       {
         "name": "RL interface (-rl-interface=127.0.0.1:PORT)",
         "use": "the lab's clock and command path: POST /step runs one 200 ms turn with the commands posted to it; POST /evaluate reads the simulation",
-        "evidence": "0 A.D. A26 source/rlinterface/RLInterface.cpp; documented client in source/tools/rlclient/python"
+        "evidence": "0 A.D. A26 source/rlinterface/RLInterface.cpp; documented client in source/tools/rlclient/python; 0.28.0 still documents -rl-interface and -autostart-nonvisual (README.command-line.txt)"
       },
       {
         "name": "g_Commands (simulation/helpers/Commands.js)",
@@ -44,6 +45,11 @@
         "name": "system component serialization",
         "use": "save and quickload carry UmCrossover's state",
         "evidence": "quickload checks in evidence/2026-10-12-hero-lab.json"
+      },
+      {
+        "name": "Diplomacy (enemies of a player)",
+        "use": "the sword and squad attack pick the nearest enemy; 0.28 moved GetEnemies from Player to a Diplomacy component",
+        "evidence": "0 A.D. 0.28.0 public.zip simulation/components/Diplomacy.js:276; 0.0.26 has GetEnemies on Player"
       }
     ]
   },
@@ -238,7 +244,7 @@
     },
     {
       "path": "um_blocks/simulation/components/UmCrossover.js",
-      "sha256": "3618d2cee532ecac242ef4988b77456713ac6b319ad66d8a527f0609a0f1c308",
+      "sha256": "7accf90e0b998c7f06addbe0c269df027effeb52a49a77e6e5174badd1714daf",
       "role": "the crossover authority: envelope checks, hero, squad, blocks, hunger, XP, Observe()"
     },
     {
@@ -691,24 +697,31 @@
   "evidence": [
     {
       "date": "2026-10-12",
-      "kind": "headless acceptance in the real engine (um lab accept, Linux x86_64, 0 A.D. 0.0.26)",
+      "kind": "headless acceptance in the real engine (um lab accept, Linux x86_64, 0 A.D. 0.0.26 from Ubuntu 24.04)",
       "result": "14/14 checks, replay identical",
       "file": "evidence/2026-10-12-accept.json",
-      "sha256": "f7eaf699d876df18165ebff33726d4336bfb352013e9dcf3c844eca182fe1e7b"
+      "sha256": "c586f1ec1de3a295736913fcd360f1af124368115dd3fe6831d5a69e1b9234d0"
     },
     {
       "date": "2026-10-12",
-      "kind": "visual play with real key and mouse input (hero_lab.py, Xvfb, Linux x86_64)",
+      "kind": "headless acceptance in the real engine (um lab accept, Linux x86_64, 0 A.D. 0.28.0 from the Ubuntu archive; on Ubuntu 24.04 it ran under its own glibc 2.43 loader, with its data and libraries mounted over the standard paths in a private mount namespace)",
+      "result": "14/14 checks, replay identical",
+      "file": "evidence/2026-10-12-accept-0.28.json",
+      "sha256": "a6bd3ca0d831de6649fad4f4c118c9a9aef4cbe80357ef194a1af0a2dab3c57b"
+    },
+    {
+      "date": "2026-10-12",
+      "kind": "visual play with real key and mouse input (hero_lab.py, Xvfb, Linux x86_64, 0 A.D. 0.0.26)",
       "result": "21/21 checks, no log errors",
       "file": "evidence/2026-10-12-hero-lab.json",
-      "sha256": "1947a1b9ee1c61c0dadaf0ea247872318fe99243f4181f6934742b3197a381d5"
+      "sha256": "18dd83e16c4c1e341b76cce07ad7462effe7afa34f3da9c328e1708c331688ad"
     },
     {
       "date": "2026-10-12",
-      "kind": "MCP client session (official Python SDK mcp 2.3.0, stdio)",
+      "kind": "MCP client session (official Python SDK mcp 2.3.0, stdio, 0 A.D. 0.0.26)",
       "result": "negotiated 2026-07-28 (server/discover) and 2025-11-25 (initialize); game paused between calls; out-of-recipe command, wrong field type and 500-turn step refused",
       "file": "evidence/2026-10-12-mcp-client.json",
-      "sha256": "2c61fc4530b99fcf7b42602917dc4d19ffd3ea76bae457bfc750335a64f85b9f"
+      "sha256": "435dd1e09cad7a0311a7307208a6a6c2be451038c76ac09c2c72aa9c54e60eb9"
     }
   ]
 }
