@@ -15,7 +15,7 @@ function showFormation(){
  const preview=$('formationPreview');preview.replaceChildren();
  const xs=candidate.slots.map(p=>p.x),zs=candidate.slots.map(p=>p.z);
  const centreX=(Math.min(...xs)+Math.max(...xs))/2,centreZ=(Math.min(...zs)+Math.max(...zs))/2;
- const scale=Math.min(190/Math.max(1,Math.max(...xs)-Math.min(...xs)),110/Math.max(1,Math.max(...zs)-Math.min(...zs))); 
+ const scale=Math.min(190/Math.max(1,Math.max(...xs)-Math.min(...xs)),110/Math.max(1,Math.max(...zs)-Math.min(...zs)));
  for(const [i,p] of candidate.slots.entries()){const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');dot.setAttribute('cx',String(120+(p.x-centreX)*scale));dot.setAttribute('cy',String(90+(p.z-centreZ)*scale));dot.setAttribute('r','7');dot.setAttribute('class',i===0?'lead-dot':'squad-dot');preview.append(dot);}
  $('formationChoices').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.pack===candidate.id)));
 }
