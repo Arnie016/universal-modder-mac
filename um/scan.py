@@ -114,11 +114,21 @@ def steam_games() -> list[dict]:
     return games
 
 
+def epic_manifest_dir() -> Path | None:
+    if is_windows():
+        return Path(r"C:\ProgramData/Epic/EpicGamesLauncher/Data/Manifests")
+    if is_wsl():
+        return Path("/mnt/c/ProgramData/Epic/EpicGamesLauncher/Data/Manifests")
+    if is_mac():   # the Mac launcher keeps the same .item manifests per user
+        return Path.home() / "Library/Application Support/Epic/EpicGamesLauncher/Data/Manifests"
+    return None
+
+
 def epic_games() -> list[dict]:
-    base = Path(r"C:\ProgramData") if is_windows() else Path("/mnt/c/ProgramData") if is_wsl() else None
+    manifests = epic_manifest_dir()
     out = []
-    if base:
-        for item in (base / "Epic/EpicGamesLauncher/Data/Manifests").glob("*.item"):
+    if manifests:
+        for item in manifests.glob("*.item"):
             try:
                 d = json.loads(item.read_text(errors="replace"))
             except (json.JSONDecodeError, OSError):

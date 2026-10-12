@@ -176,6 +176,7 @@ players, and an honest status and verification.
 | `um backup` | Snapshot, diff and restore save folders |
 | `um publish check` | Blocks shipping game files, decompiled code and leaked keys |
 | `um kb` | The knowledge base: `search`, `show`, `new`, `check`, `index`, `sync`, `pr` |
+| `um scout` | Scout open-source Mac mashup/mod projects: `search` (GitHub, Hacker News, Reddit), `repo` (Mac build evidence, hooks, licence, disposition), `post` (an X/Twitter link via public oEmbed), `installed`, a findings ledger, and `mcp`: the same tools as a stdio MCP server (`mashup-scout` in `.mcp.json`). Read-only; results are source claims until run |
 
 Two no-build Windows tools ship inside the package (`um/ps1/`): WinDrive input and ProcLoopback game-only
 audio, both PowerShell with embedded C#.

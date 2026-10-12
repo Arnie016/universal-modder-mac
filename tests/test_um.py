@@ -397,3 +397,92 @@ def test_mac_keycodes_in_swift_source():
 def test_cli_registers_mac_group():
     from um.cli import GROUPS
     assert "mac" in GROUPS and "win" in GROUPS
+
+
+# --------------------------------------------------------------------------- scout (offline: the network is stubbed)
+
+from um import scout  # noqa: E402
+
+
+def test_scout_repos_in_skips_github_pages():
+    text = "see https://github.com/veloren/veloren and github.com/topics/mac plus https://github.com/a-b/c.d.git#readme"
+    assert scout.repos_in(text) == ["veloren/veloren", "a-b/c.d"]
+
+
+def test_scout_assess_dispositions():
+    now = 1_790_000_000
+    meta = dict(full_name="o/r", html_url="https://github.com/o/r", description="Fabric bridge for macOS",
+                license=dict(spdx_id="MIT"), pushed_at="2026-10-01T00:00:00Z", topics=["mod-loader"])
+    a = scout.assess(meta, "Runs on Apple Silicon. WebSocket bridge.", ["Package.swift"], ["tool-macos-arm64.dmg"], now)
+    assert a["disposition"] == "BOUNDED_EXPERIMENT" and a["hooks"] and any("dmg" in m for m in a["mac_evidence"])
+    prose_only = scout.assess(meta, "works on macOS", [], [], now)
+    assert prose_only["disposition"] == "REFERENCE_ONLY"
+    nothing = scout.assess(dict(meta, description="Windows mod"), "DirectX only", [], ["setup.exe"], now)
+    assert nothing["disposition"] == "REJECTED"
+    risky = scout.assess(meta, "macOS aimbot", ["Package.swift"], [], now)
+    assert risky["disposition"] == "REJECTED" and any("aimbot" in f for f in risky["flags"])
+    unlicensed = scout.assess(dict(meta, license=None), "macOS plugin", ["Package.swift"], [], now)
+    assert unlicensed["disposition"] == "REFERENCE_ONLY" and any("licence" in f for f in unlicensed["flags"])
+
+
+def test_scout_search_survives_a_dead_source(monkeypatch):
+    def fake(url, headers=None):
+        if "algolia" in url:
+            raise OSError("offline")
+        return {"items": [dict(full_name="o/r", html_url="https://github.com/o/r", owner=dict(login="o"),
+                               pushed_at="2026-10-02T00:00:00Z", stargazers_count=5, description="mac mashup")]}
+    monkeypatch.setattr(scout, "fetch_json", fake)
+    r = scout.search("mac mashup", ("github", "hn", "nope"), 3)
+    assert [x["repos"] for x in r["results"]] == [["o/r"]]
+    assert "hn" in r["errors"] and "nope" in r["errors"]
+
+
+def test_scout_x_post_via_oembed(monkeypatch):
+    body = ('<blockquote><p>New Mac mod bridge <a href="https://github.com/o/r">github.com/o/r</a> '
+            '<a href="https://twitter.com/hashtag/mac">#mac</a></p>&mdash; Someone (@s)</blockquote>')
+    monkeypatch.setattr(scout, "fetch_json", lambda url, headers=None: dict(html=body, author_name="Someone"))
+    monkeypatch.setattr(scout, "assess_repo", lambda r: dict(repo=r, disposition="REFERENCE_ONLY"))
+    r = scout.resolve_post("https://x.com/s/status/123")
+    assert r["kind"] == "x" and r["author"] == "Someone" and r["repos"] == ["o/r"]
+    assert r["assessed"][0]["repo"] == "o/r" and "Mac mod bridge" in r["text"]
+
+
+def test_scout_x_search_needs_a_token(monkeypatch):
+    monkeypatch.delenv("X_BEARER_TOKEN", raising=False)
+    r = scout.search("anything", ("x",), 3)
+    assert r["results"] == [] and "X_BEARER_TOKEN" in r["errors"]["x"]
+
+
+def test_scout_ledger_round_trip(tmp_path, monkeypatch):
+    monkeypatch.setenv("UM_HOME", str(tmp_path))
+    scout.log_finding("https://github.com/o/r", "REFERENCE_ONLY", "readable bridge protocol")
+    with pytest.raises(ValueError):
+        scout.log_finding("u", "MAYBE", "x")
+    assert scout.findings()["count"] == 1
+
+
+def test_scout_mcp_handshake_over_stdio():
+    msgs = [dict(jsonrpc="2.0", id=1, method="initialize", params=dict(protocolVersion="2025-06-18", capabilities={},
+                                                                       clientInfo=dict(name="t", version="0"))),
+            dict(jsonrpc="2.0", method="notifications/initialized"),
+            dict(jsonrpc="2.0", id=2, method="tools/list"),
+            dict(jsonrpc="2.0", id=3, method="tools/call", params=dict(name="log_finding", arguments=dict(url="u", disposition="BAD", insight="i"))),
+            dict(jsonrpc="2.0", id=4, method="nope")]
+    root = Path(__file__).resolve().parents[1]
+    p = subprocess.run([sys.executable, "-m", "um", "scout", "mcp"], input="\n".join(json.dumps(m) for m in msgs) + "\n",
+                       capture_output=True, text=True, cwd=root, timeout=30)
+    out = [json.loads(l) for l in p.stdout.splitlines()]
+    assert [o["id"] for o in out] == [1, 2, 3, 4]
+    assert out[0]["result"]["serverInfo"]["name"] == "mashup-scout"
+    assert {t["name"] for t in out[1]["result"]["tools"]} >= {"scout_search", "assess_repo", "resolve_post", "installed_games"}
+    assert out[2]["result"]["isError"] is True
+    assert out[3]["error"]["code"] == -32601
+
+
+def test_epic_manifests_on_mac(tmp_path, monkeypatch):
+    man = tmp_path / "Manifests"
+    game = tmp_path / "Cyberpunk2077"
+    game.mkdir()
+    make(man, {"x.item": json.dumps(dict(AppName="Ginger", DisplayName="Cyberpunk 2077", InstallLocation=str(game)))})
+    monkeypatch.setattr(scan, "epic_manifest_dir", lambda: man)
+    assert scan.epic_games() == [dict(store="epic", appid="Ginger", name="Cyberpunk 2077", path=str(game))]
