@@ -11,6 +11,12 @@ export function createWorld(epoch=1){
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 export function blocked(x,z,r=.52){return Math.abs(x)>40||Math.abs(z)>38||obstacles.some(o=>Math.abs(x-o.x)<o.w/2+r&&Math.abs(z-o.z)<o.d/2+r);}
 export function clearSight(a,b){const n=Math.ceil(distance(a,b)*3);for(let i=1;i<n;i++){const t=i/n;if(blocked(a.x+(b.x-a.x)*t,a.z+(b.z-a.z)*t,0))return false;}return true;}
+export function formationDestinations(w,count,x,z){
+  if(!Number.isInteger(count)||count<1||count>8||!Number.isFinite(x)||!Number.isFinite(z)||blocked(x,z))throw Error('Choose an open part of the battlefield.');
+  const destinations=validateFormation(w.formation||formations[0]).slots.slice(0,count).map(p=>({x:x+p.x,z:z+p.z}));
+  if(destinations.some(p=>blocked(p.x,p.z)))throw Error('This formation touches a wall or edge. Choose more open ground.');
+  return destinations;
+}
 export function applyOrder(w,e){
   if(e.v!==1||e.epoch!==w.epoch||!Number.isSafeInteger(e.seq)||e.seq<1||w.applied.includes(e.seq)||![1,2].includes(e.owner))return false;
   const c=e.command;if(!['walk','attack-walk','attack','stance'].includes(c?.type)||c.queued||c.pushFront||!Array.isArray(c.entities)||!c.entities.length||c.entities.length>32||new Set(c.entities).size!==c.entities.length)return false;
@@ -18,10 +24,10 @@ export function applyOrder(w,e){
   if(['walk','attack-walk'].includes(c.type)&&(!Number.isFinite(c.x)||!Number.isFinite(c.z)||blocked(c.x,c.z)))return false;
   if(c.type==='attack'&&!w.units.some(u=>u.id===c.target&&u.team!==e.owner&&u.hp>0))return false;
   if(c.type==='stance'&&!['aggressive','defensive','passive','standground'].includes(c.name))return false;
-  const slots=validateFormation(w.formation||formations[0]).slots;
-  if(['walk','attack-walk'].includes(c.type)&&targets.some((_,i)=>blocked(c.x+slots[i].x,c.z+slots[i].z)))return false;
+  let destinations=[];
+  if(['walk','attack-walk'].includes(c.type)){try{destinations=formationDestinations(w,targets.length,c.x,c.z);}catch{return false;}}
   w.applied.push(e.seq);w.sequence=Math.max(w.sequence,e.seq);
-  targets.forEach((u,i)=>{if(c.type==='stance')u.stance=c.name;else u.order={...c,x:c.x+slots[i].x,z:c.z+slots[i].z};});
+  targets.forEach((u,i)=>{if(c.type==='stance'){u.stance=c.name;if(c.name==='standground'){u.order=null;u.path=[];delete u.pathTarget;}}else{u.order={...c,...destinations[i]};u.path=[];delete u.pathTarget;}});
   return true;
 }
 export function switchView(w,id=w.possessed){if(w.status!=='playing')return false;const u=w.units.find(x=>x.id===id&&x.team===1&&x.hp>0);if(!u)return false;w.possessed=id;w.view=w.view==='overview'?'soldier':'overview';return true;}
@@ -52,6 +58,12 @@ export function step(w,dt=1/60,input={}){
       move(u,input.dx||0,input.dz||0,dt,input.sprint?7:5);
       if(input.strike&&u.cooldown===0&&nearest&&distance(u,nearest)<3.6&&clearSight(u,nearest))hit(w,u,nearest,55);
       continue;
+    }
+    // A retreat/move is explicit intent. Attack-walk may seek combat; walk
+    // must reach its destination before automatic defensive pursuit resumes.
+    if(u.order?.type==='walk'){
+      if(distance(u,u.order)<.4){u.order=null;u.path=[];delete u.pathTarget;}
+      else{navigate(u,u.order,w,dt);continue;}
     }
     const explicit=w.units.find(e=>e.id===u.order?.target&&e.hp>0);
     const target=explicit||(u.stance!=='passive'&&nearest&&distance(u,nearest)<(u.team===2?40:u.stance==='defensive'?5:10)?nearest:null);

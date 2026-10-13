@@ -274,6 +274,15 @@ enum NativeVerifier {
         let beforeBadLayout=try runtime.call("save")
         do{_=try runtime.callJSON("formation","{\"schema\":\"remix-formation/1\"}");throw HostFailure.message("Bad formation accepted")}catch let e as HostFailure {if e.description=="Bad formation accepted"{throw e}}
         try check(try runtime.call("save")==beforeBadLayout,"native invalid layout leaves battle unchanged")
+        state=try fixture{u in u[0]["x"]=0;u[0]["z"]=20;u[0]["stance"]="defensive";u[8]["x"]=0;u[8]["z"]=17}
+        _=try runtime.call("viewpoint",["epoch":state.epoch,"id":1,"view":"overview"])
+        _=try runtime.call("order",["epoch":state.epoch,"ids":[1],"action":"move","payload":["x":-8,"z":28]])
+        _=try runtime.call("advance",["ticks":60]);state=try runtime.state()
+        try check(state.units[0].z>22 && state.units[0].x < -2,"native move obeys retreat instead of chasing")
+        let stoppedX=state.units[0].x,stoppedZ=state.units[0].z
+        _=try runtime.call("order",["epoch":state.epoch,"ids":[1],"action":"stance","payload":["name":"standground"]])
+        _=try runtime.call("advance",["ticks":60]);state=try runtime.state()
+        try check(abs(state.units[0].x-stoppedX)<0.000001 && abs(state.units[0].z-stoppedZ)<0.000001,"native hold cancels active travel")
         let receiptObject:[String:Any]=["runtime":"JavaScriptCore","host":"native-valley","checks":checks,"passed":checks.count,"nativeWindow":"NOT_TESTED_BY_THIS_VERIFIER","full0ADEngine":false,"humanPlaytest":"NOT_TESTED"]
         print(String(data:try JSONSerialization.data(withJSONObject:receiptObject,options:[.prettyPrinted,.sortedKeys]),encoding:.utf8)!)
     }
