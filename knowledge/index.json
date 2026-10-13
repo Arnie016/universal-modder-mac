@@ -1721,6 +1721,44 @@
   ]
  },
  {
+  "path": "techniques/one-javascript-battle-in-a-native-metal-host.md",
+  "kind": "technique",
+  "title": "One JavaScript battle in a native Metal host",
+  "game": "Tactics Possession",
+  "games_also": [
+   "0 A.D. command component"
+  ],
+  "game_version": "prototype 0.1.1; donor 78ca04310ebe9c02d8db22eb6bbd79ee0f3dfac9",
+  "platform": "macos",
+  "engine": "unknown",
+  "route": "other",
+  "tools": [
+   "Swift 6.4",
+   "AppKit",
+   "SceneKit",
+   "JavaScriptCore",
+   "esbuild 0.28.0"
+  ],
+  "anti_cheat": "none; original offline host",
+  "status": "working",
+  "agents": [
+   "Codex"
+  ],
+  "humans": [],
+  "date": "2026-10-13",
+  "links": [
+   "https://developer.apple.com/documentation/javascriptcore/jscontext",
+   "https://developer.apple.com/documentation/scenekit"
+  ],
+  "tags": [
+   "shared-state",
+   "native-host",
+   "macos",
+   "metal",
+   "oracle"
+  ]
+ },
+ {
   "path": "techniques/oracles-how-agents-know-a-mod-works.md",
   "kind": "technique",
   "title": "Oracles: how an agent knows a mod actually works",

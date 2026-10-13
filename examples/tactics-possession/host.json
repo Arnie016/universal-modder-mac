@@ -1,0 +1,19 @@
+{
+  "id": "browser-valley",
+  "envelopeVersion": 1,
+  "coordinateSystem": "right-handed-y-up",
+  "distanceUnit": "metre",
+  "tickHz": 60,
+  "commands": [
+    "walk",
+    "attack-walk",
+    "attack",
+    "stance"
+  ],
+  "authority": {
+    "movement": "host",
+    "collision": "host",
+    "damage": "host",
+    "persistence": "host"
+  }
+}
